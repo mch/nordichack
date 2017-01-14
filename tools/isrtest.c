@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   pwmSetRange(250);
 
   pinMode(SPEED_SENSE_PIN, INPUT);
-  pullUpDnControl(SPEED_SENSE_PIN, PUD_DOWN);
+  pullUpDnControl(SPEED_SENSE_PIN, PUD_UP);
 
   int current = digitalRead(17);
 
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
   wiringPiISR(SPEED_SENSE_PIN, INT_EDGE_RISING, &pulse);
 
   clock_gettime(CLOCK_MONOTONIC, &startTime);
-  pwmWrite(PWM_PIN, 50);
+  pwmWrite(PWM_PIN, 60);
   int i = 0;
   for (i = 0; i < 10; i++)
     {
