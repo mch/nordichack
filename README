@@ -1,0 +1,44 @@
+# TreadmillPi
+
+This project implements a controller and web interface for treadmills that use
+the MC2100LTS-30 motor controller board (Icon part number [263165]()). This likely
+includes many Icon Fitness treadmills under various brand names such as
+Epic, NordicTrack, Proform, Reebok, and probably others. Use the part search
+form at [Icon Service Canada](https://www.iconservice.ca/CustomerService/parts)
+or [Icon Service](https://www.iconservice.com/CustomerService/parts.do) to
+search for part number 263165 to see if your model might work. 
+
+The long term goal is to allow for control of treadmill speed and incline, easy
+contruction of traing programs, and recording fitness data, including heart rate
+(via a USB ANT+ dongle).
+
+# Interface hardware
+
+todo: schematics
+
+# Installing
+
+WiringPi2 is used to control the GPIO pins, which are used to interface with the
+treadmill. Ensure WiringPi2 is installed:
+```
+sudo pip install wiringpi2
+```
+
+This project currently uses Flask for it's web server. Flask can be set up
+
+```
+cd server
+pip install virtualenv
+virtualenv venv
+. venv/bin/activate
+pip install flask
+export FLASK_APP=treadmill.py
+export FLASH_DEBUG=1
+flask run
+```
+
+The front end is written in Elm. Unfortunatly the Elm compiler is not available
+on the Raspberry Pi, so it is necessary to build the frontend on a Windows, Mac,
+or Linux machine. 
+
+
