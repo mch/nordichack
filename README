@@ -16,11 +16,37 @@ contruction of traing programs, and recording fitness data, including heart rate
 
 todo: schematics
 
+# Components
+
+This project is a suite of three pieces of software.
+
+## Controller
+
+The controller program is written in C++ and is responsible for
+interacting with the GPIO pins. It has a minimum of logic, being
+responsible only for calculations directly related to controlling the
+speed and incline of the treadmill.
+
+The controller program uses ZeroMQ to communicate with the web server.
+
+## Webserver
+
+The webserver is currently written in Python using Flask. This part is
+responsible for serving static resources such as the UI, storing
+information in a database to facilitate the construction of training
+programs and recording runs.
+
+## UI
+
+The front end is written in Elm. Unfortunatly the Elm compiler is not available
+on the Raspberry Pi, so it is necessary to build the frontend on a Windows, Mac,
+or Linux machine. 
+
 # Installing
 
-WiringPi2 is used to control the GPIO pins, which are used to interface with the
-treadmill. Ensure WiringPi2 is installed:
+Install the required dependencies:
 ```
+sudo apt-get install wiringpi libzmq3-dev python-zmq
 sudo pip install wiringpi2
 ```
 

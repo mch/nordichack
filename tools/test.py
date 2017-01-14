@@ -2,6 +2,7 @@ import wiringpi
 import time
 
 PWM_PIN = 18
+SPEED_SENSE_PIN = 17
 
 # 19.2e6 Hz / CLOCK_DIVISOR / RANGE = 20 Hz
 PWM_CLOCK_DIVISOR = 3840
@@ -26,9 +27,13 @@ def init():
     wiringpi.pwmSetClock(3840)
     wiringpi.pwmSetRange(250)
 
+    wiringpi.pinMode(SPEED_SENSE_PIN, wiringpi.INPUT)
+    wiringpi.pullUpDnControl(SPEED_SENSE_PIN, PUD_DOWN)
 
 def cleanup():
-    
+   wiringpi.digitalWrite(PWM_PIN, 0)
+   wiringpi.pinMode(PWM_PIN, wiringpi.INPUT)
+ 
 
 def setDesiredSpeedKph(speedKph):
 
@@ -58,3 +63,4 @@ time.sleep(10)
 
 setDesiredSpeedKph(0.0)
 
+cleanup()
