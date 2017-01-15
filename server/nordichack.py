@@ -24,8 +24,12 @@ def connect_db():
     return rv
 
 @app.route('/')
-def hello_world():
-    return 'Hello, World!'
+def hello():
+    return render_template('index.html')
+
+@app.route('/controller')
+def controller():
+    return render_template('controller.html')
 
 @app.route('/api/v1/desiredspeed', methods=['GET', 'POST'])
 def desiredspeed():
@@ -39,14 +43,18 @@ def desiredspeed():
             speed = None
 
         if speed is None:
-            return flask.Response(response = "Invalid speed requested",
-                                  status = 400,
-                                  headers = None,
-                                  mimetype = "text/plain")
+            response = app.make_response(("Invalid speed requested", 400, []))
+            response.mimetype = "text/plain"
+            return response
         
-        set_desired_speed(float(request.data))
+        data = set_desired_speed(float(request.data))
     else:
-        return "0.0"    
+        data = "0.0"
+
+    response = app.make_response(data)
+    response.mimetype = "text/plain"
+
+    return response
 
 def set_desired_speed(speed):
 
@@ -65,4 +73,5 @@ def set_desired_speed(speed):
     s.send(b"SETDUTYCYCLE %d" % dutycycle)
     msg = s.recv()
     print("reply: '%s'" % (msg, ))
+    return msg
 
