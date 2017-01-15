@@ -1,6 +1,8 @@
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
+import Http exposing (send, request, stringBody, expectString)
+import Time
 
 -- Speed is represented as an integer in increments of 0.2 to avoid
 -- floating point fun.
@@ -10,38 +12,85 @@ min_speed_increment = 0
 max_speed_increment = 30 * 5 -- 30 Km/h, 5 increments of 0.2
 
 
-main = Html.beginnerProgram { model = model, view = view, update = update }
+main = Html.program { init = init
+                    , view = view
+                    , update = update
+                    , subscriptions = subscriptions }
 
-type alias Model = Int
 
-model : Model
-model = 0
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+type alias Model =
+    { speed : Int
+    , requestedSpeed : Int
+    , error : String
+    }
 
 
 type Msg = IncreaseSpeed
          | DecreaseSpeed
          | SetSpeed Int
+         | SetSpeedResponse (Result Http.Error String)
 
 
-update : Msg -> Model -> Model
+init : (Model, Cmd Msg)
+init = ({ speed = 0, requestedSpeed = 0, error = "" }, Cmd.none)
+
+
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        IncreaseSpeed -> changeSpeed model (model + 1)
-        DecreaseSpeed -> changeSpeed model (model - 1)
+        IncreaseSpeed -> changeSpeed model (model.speed + 1)
+        DecreaseSpeed -> changeSpeed model (model.speed - 1)
         SetSpeed speed -> changeSpeed model speed
+        SetSpeedResponse result -> (updateSpeed model result, Cmd.none)
 
 
-changeSpeed : Int -> Int -> Int
-changeSpeed originalSpeed requestedSpeed =
+updateSpeed : Model -> Result Http.Error String -> Model
+updateSpeed model result =
+    case result of
+        Ok response -> { model | speed = model.requestedSpeed, error = "" } -- Have to check response...
+        Err error -> { model | requestedSpeed = model.speed, error = stringifyError error }
+
+
+stringifyError error =
+    case error of
+        Http.BadUrl s -> "Bad URL: " ++ s
+        Http.Timeout -> "Timeout"
+        Http.NetworkError -> "Network Error"
+        Http.BadStatus r -> "Bad status"
+        Http.BadPayload s r -> "Bad payload"
+
+
+changeSpeed : Model -> Int -> (Model, Cmd Msg)
+changeSpeed model requestedSpeed =
     if requestedSpeed >= min_speed_increment && requestedSpeed <= max_speed_increment then
-        requestedSpeed
+        ({ model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed)
     else
-        originalSpeed
+        (model, Cmd.none)
+
+
+postSpeedChange : Int -> Cmd Msg
+postSpeedChange requestedSpeed =
+    let
+        req = Http.request { method = "POST"
+                           , headers = []
+                           , url = "/api/v1/desiredspeed"
+                           , body = (stringBody "text/plain" (toString ((toFloat requestedSpeed) * speed_increment)))
+                           , expect = expectString
+                           , timeout = Just Time.second
+                           , withCredentials = False
+                           }
+    in
+        Http.send (\r -> SetSpeedResponse r) req
 
 
 view : Model -> Html Msg
 view model =
-    div [] [ div [] [ text ("Current Speed: " ++ (toString ((toFloat model) * speed_increment))) ]
+    div [] [ div [] [ text ("Current Speed: " ++ (toString ((toFloat model.speed) * speed_increment))) ]
            , div [] [ button
                           [ class "mdl-button mdl-js-button mdl-button--fab mdl-button--colored"
                           , onClick IncreaseSpeed ]
@@ -77,4 +126,5 @@ view model =
                           , onClick (SetSpeed 60)]
                           [ text "12"]
                     ]
+           , div [] [ text model.error ]
            ]
