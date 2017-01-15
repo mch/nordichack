@@ -84,6 +84,8 @@ void Gpio::shutdown()
   
 void Gpio::writePwm(int dutyCyclePercent)
 {
+  // TODO check that the key is inserted. If not switch everything off.
+  
   if (dutyCyclePercent < 0 || dutyCyclePercent > 100)
     {
       throw std::range_error("Duty cycle must be in the range 0 <= dutyCyclePercent <= 100.");
