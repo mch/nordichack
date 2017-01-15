@@ -2,8 +2,8 @@
 CXX=g++
 CPPFLAGS=-I.
 
-DEPS = controller.h
-OBJ = controller.o
+DEPS = controller.h gpio.h
+OBJ = controller.o gpio.o
 
 LINKFLAGS=
 LIBS=-lm -lzmq -lwiringPi
