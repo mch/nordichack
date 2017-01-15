@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 class HardwareInterface
 {
  public:
@@ -34,9 +36,28 @@ class FakeGpio : public HardwareInterface
   {}
   
   void writePwm(int dutyCyclePercent)
-  {}
+  {
+    if (dutyCyclePercent == 0)
+      {
+	speed = 0;
+      }
+    else
+      {
+	speed = round(3.424 * dutyCyclePercent - 18.558);
+      }
+  }
 
   int readSpeedFrequency()
-  {}
+  {
+    if (speed == 0)
+      {
+	return 0;
+      }
+    
+    return round(1.93 * speed - 0.657);
+  }
+
+ private:
+  int speed;
   
 };

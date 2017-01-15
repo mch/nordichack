@@ -78,6 +78,8 @@ void Gpio::init()
 void Gpio::shutdown()
 {
   pwmWrite(PWM_PIN, 0);
+  pinMode(PWM_PIN, INPUT);
+  pullUpDnControl(SPEED_SENSE_PIN, PUD_OFF);
 }
   
 void Gpio::writePwm(int dutyCyclePercent)
