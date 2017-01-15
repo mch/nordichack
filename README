@@ -1,4 +1,4 @@
-# TreadmillPi
+# NordicHack
 
 This project implements a controller and web interface for treadmills that use
 the MC2100LTS-30 motor controller board (Icon part number [263165]()). This likely
@@ -22,10 +22,12 @@ This project is a suite of three pieces of software.
 
 ## Controller
 
-The controller program is written in C++ and is responsible for
-interacting with the GPIO pins. It has a minimum of logic, being
-responsible only for calculations directly related to controlling the
-speed and incline of the treadmill.
+The controller program is written in C++ and is responsible for interacting with
+the GPIO pins. It has a minimum of logic, being responsible only for
+calculations directly related to controlling the speed and incline of the
+treadmill, as well as features related to safe operations of the hardware, such
+as ensuring the key is in the console before allowing operation and stopping the
+motors if no feedback on their motion is available.
 
 The controller program uses ZeroMQ to communicate with the web server.
 
@@ -58,7 +60,7 @@ pip install virtualenv
 virtualenv venv
 . venv/bin/activate
 pip install flask
-export FLASK_APP=treadmill.py
+export FLASK_APP=nordichack.py
 export FLASH_DEBUG=1
 flask run
 ```

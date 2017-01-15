@@ -9,12 +9,12 @@ app.config.from_object(__name__)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'treadmill.db'),
+    DATABASE=os.path.join(app.root_path, 'nordichack.db'),
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='admin'
 ))
-app.config.from_envvar('TREADMILL_SETTINGS', silent=True)
+app.config.from_envvar('NORDICHACK_SETTINGS', silent=True)
 
 def connect_db():
     """Connects to the specific database."""
