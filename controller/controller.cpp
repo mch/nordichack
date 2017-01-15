@@ -90,7 +90,11 @@ int main(int argc, char** argv)
 {
   try
     {
+#ifdef USE_FAKE_GPIO
       FakeGpio gpio;
+#else
+      Gpio gpio;
+#endif
       gpio.init();
 
       zmq::context_t context(1);
