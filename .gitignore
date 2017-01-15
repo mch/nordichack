@@ -2,7 +2,7 @@
 *.o
 *#
 .#*
-
+*.pyc
 
 a.out
 controller/controller
