@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
   printf("Current value of input pin: %d\n", current);
 
-  wiringPiISR(SPEED_SENSE_PIN, INT_EDGE_RISING, &pulse);
+  wiringPiISR(SPEED_SENSE_PIN, INT_EDGE_FALLING, &pulse);
 
   clock_gettime(CLOCK_MONOTONIC, &startTime);
   pwmWrite(PWM_PIN, 60);
