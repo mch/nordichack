@@ -81,7 +81,7 @@ postSpeedChange requestedSpeed =
                            , url = "/api/v1/desiredspeed"
                            , body = (stringBody "text/plain" (toString ((toFloat requestedSpeed) * speed_increment)))
                            , expect = expectString
-                           , timeout = Just Time.second
+                           , timeout = Just (Time.second * 2.5)
                            , withCredentials = False
                            }
     in
@@ -90,41 +90,58 @@ postSpeedChange requestedSpeed =
 
 view : Model -> Html Msg
 view model =
-    div [] [ div [] [ text ("Current Speed: " ++ (toString ((toFloat model.speed) * speed_increment))) ]
-           , div [] [ button
-                          [ class "mdl-button mdl-js-button mdl-button--fab mdl-button--colored"
-                          , onClick IncreaseSpeed ]
-                          [ i [ class "material-icons" ] [ text "add circle outline" ] ]
-                    , button
-                          [ class "mdl-button mdl-js-button mdl-button--fab mdl-button--colored"
-                          , onClick DecreaseSpeed ]
-                          [ i [ class "material-icons" ] [ text "remove circle outline" ] ]
-                    ]
-           , div [] [ text "Speed Presets" ]
-           , div [] [ button
-                          [ class "mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-                          , onClick (SetSpeed 10)]
-                          [ text "2"]
-                    , button
-                          [ class "mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-                          , onClick (SetSpeed 20)]
-                          [ text "4"]
-                    , button
-                          [ class "mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-                          , onClick (SetSpeed 30)]
-                          [ text "6"]
-                    , button
-                          [ class "mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-                          , onClick (SetSpeed 40)]
-                          [ text "8"]
-                    , button
-                          [ class "mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-                          , onClick (SetSpeed 50)]
-                          [ text "10"]
-                    , button
-                          [ class "mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-                          , onClick (SetSpeed 60)]
-                          [ text "12"]
-                    ]
-           , div [] [ text model.error ]
-           ]
+    div [ class "cpanel" ]
+        [ div [ class "cpanel-readout" ]
+              [ div [ class "cpanel-readout-speed" ]
+                    [ text ((toString ((toFloat model.speed) * speed_increment)) ++ " km/h" ) ] 
+              , div [ class "cpanel-readout-time" ]
+                  [ text "00:00" ] 
+              , div [ class "cpanel-readout-distance" ]
+                  [ text "0.00 km" ] ]
+        , div [ class "cpanel-buttons" ]
+            [ button
+                  [ class "cpanel-button"
+                  , onClick IncreaseSpeed ]
+                  [ text "+" ]
+            , button
+                  [ class "cpanel-button"
+                  , onClick DecreaseSpeed ]
+                  [ text "-" ]
+            ]
+        , div [] [ button
+                       [ class "cpanel-preset-button"
+                       , onClick (SetSpeed 10)]
+                       [ text "2"]
+                 , button
+                       [ class "cpanel-preset-button"
+                       , onClick (SetSpeed 20)]
+                       [ text "4"]
+                 , button
+                       [ class "cpanel-preset-button"
+                       , onClick (SetSpeed 30)]
+                       [ text "6"]
+                 , button
+                       [ class "cpanel-preset-button"
+                       , onClick (SetSpeed 40)]
+                       [ text "8"]
+                 , button
+                       [ class "cpanel-preset-button"
+                       , onClick (SetSpeed 50)]
+                       [ text "10"]
+                 , button
+                       [ class "cpanel-preset-button"
+                       , onClick (SetSpeed 60)]
+                       [ text "12"]
+                 ]
+        , div [] [ button
+                       [ class "cpanel-start-button"
+                       , onClick (SetSpeed 10) ]
+                       [ text "Start" ]
+                 , button
+                       [ class "cpanel-stop-button"
+                       , onClick (SetSpeed 0) ]
+                       [ text "Stop" ]
+                 ]
+        , div [] [ text model.error ]
+        ]
+        

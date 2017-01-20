@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NordicHack Control Panel</title>
+
+    <link rel="stylesheet" href="nordichack.css">
+
+  </head>
+
+  <body>
+    <div id="main"></div>
+    <script src="controller.js"></script>
+    <script>
+      var node = document.getElementById('main');
+      var app = Elm.Main.embed(node);
+    </script>
+</body>
+  
+</html>

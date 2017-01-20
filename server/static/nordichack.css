@@ -1,0 +1,40 @@
+
+.cpanel {
+    width: 100%;
+    text-align: center;
+}
+
+.cpanel-readout {
+    font-size: 24px;
+}
+
+.cpanel-button {
+    padding: 2em;
+    border: blue;
+    border-style: groove;
+    font-size: 12px;
+    margin: 10px;
+}
+
+.cpanel-preset-button {
+    width: 15%;
+    padding: 1em;
+    border: green;
+    border-style: groove;
+    font-size: 10px;
+    margin: 2px;
+}
+
+.cpanel-start-button {
+    background-color: green;
+    color: white;
+    padding: 1em;
+    margin: 1em;
+}
+
+.cpanel-stop-button {
+    background-color: red;
+    color: white;
+    padding: 1em;
+    margin: 1em;
+}
