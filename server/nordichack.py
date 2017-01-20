@@ -13,7 +13,9 @@ app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'nordichack.db'),
     SECRET_KEY='development key',
     USERNAME='admin',
-    PASSWORD='admin'
+    PASSWORD='admin',
+    #ZMQ='tcp://localhost:5555'
+    ZMQ='fake'
 ))
 app.config.from_envvar('NORDICHACK_SETTINGS', silent=True)
 
@@ -22,6 +24,41 @@ def connect_db():
     rv = sqlite3.connect(app.config['DATABASE'])
     rv.row_factory = sqlite3.Row
     return rv
+
+class FakeSocket:
+    def __init__(self):
+        pass
+
+    def send(self, msg):
+        print "fake socket msg '%s'" % (msg,)
+
+    def recv(self):
+        return "OK"
+
+    def close(self):
+        pass
+
+def get_socket():
+    s = getattr(g, '_socket', None)
+    if s is None:
+        s = g._socket = FakeSocket()
+
+        #c = g._context = zmq.Context()
+        #s = g._socket = c.socket(zmq.REQ)
+        #s.connect("tcp://localhost:5555") # todo use configuration
+
+    return s
+
+@app.teardown_appcontext
+def close_socket(exception):
+    s = getattr(g, '_socket', None)
+    if s is not None:
+        s.close()
+
+    c = getattr(g, '_context', None)
+    if c is not None:
+        # ??
+        pass
 
 @app.route('/')
 def hello():
@@ -46,7 +83,7 @@ def desiredspeed():
             response = app.make_response(("Invalid speed requested", 400, []))
             response.mimetype = "text/plain"
             return response
-        
+
         data = set_desired_speed(float(request.data))
     else:
         data = "0.0"
@@ -65,11 +102,11 @@ def set_desired_speed(speed):
 
     if speed == 0.0:
         dutycycle = 0
-    
+
     # a "service" for handling sending zmq requests?
-    c = zmq.Context()
-    s = c.socket(zmq.REQ)
-    s.connect("tcp://localhost:5555")
+    s = get_socket()
+
+    # this blocks indefinitly...
     s.send(b"SETDUTYCYCLE %d" % dutycycle)
     msg = s.recv()
     print("reply: '%s'" % (msg, ))
