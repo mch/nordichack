@@ -8,7 +8,7 @@ import Time
 -- floating point fun.
 speed_increment : Float
 speed_increment = 0.2
-min_speed_increment = 0
+min_speed_increment = 2 * 5  -- 2 Km/h
 max_speed_increment = 30 * 5 -- 30 Km/h, 5 increments of 0.2
 
 
@@ -43,10 +43,34 @@ init = ({ speed = 0, requestedSpeed = 0, error = "" }, Cmd.none)
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        IncreaseSpeed -> changeSpeed model (model.speed + 1)
-        DecreaseSpeed -> changeSpeed model (model.speed - 1)
+        IncreaseSpeed -> increaseSpeed model
+        DecreaseSpeed -> decreaseSpeed model
         SetSpeed speed -> changeSpeed model speed
         SetSpeedResponse result -> (updateSpeed model result, Cmd.none)
+
+
+increaseSpeed : Model -> (Model, Cmd Msg)
+increaseSpeed model =
+    let
+        requestedSpeed =
+            if (model.speed < min_speed_increment) then
+                min_speed_increment
+            else
+                model.speed + 1
+    in
+        ({ model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed)
+
+
+decreaseSpeed : Model -> (Model, Cmd Msg)
+decreaseSpeed model =
+    let
+        requestedSpeed =
+            if (model.speed == min_speed_increment) then
+                0
+            else
+                model.speed - 1
+    in
+        ({ model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed)
 
 
 updateSpeed : Model -> Result Http.Error String -> Model
@@ -67,7 +91,9 @@ stringifyError error =
 
 changeSpeed : Model -> Int -> (Model, Cmd Msg)
 changeSpeed model requestedSpeed =
-    if requestedSpeed >= min_speed_increment && requestedSpeed <= max_speed_increment then
+    if requestedSpeed == 0
+        || (requestedSpeed >= min_speed_increment
+            && requestedSpeed <= max_speed_increment) then
         ({ model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed)
     else
         (model, Cmd.none)
