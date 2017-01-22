@@ -1,4 +1,4 @@
-module ControlPanel exposing (..)
+module ControlPanel exposing (init, view, update, subscriptions, Model, Msg)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -24,15 +24,6 @@ min_speed_increment =
 max_speed_increment =
     -- 30 Km/h, 5 increments of 0.2
     30 * 5
-
-
-main =
-    Html.program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
 
 
 subscriptions : Model -> Sub Msg
