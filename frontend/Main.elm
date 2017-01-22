@@ -40,7 +40,7 @@ subscriptions model =
     -- If I used animation timing, I'd be able to display milliseconds
     -- and the distance would be a little more accurate, but at what
     -- cost to power consumption?
-    Time.every (Time.second * 0.25) Tick
+    Time.every (Time.second * 0.1) Tick
 
 
 type alias Model =
@@ -104,15 +104,17 @@ updateTimeAndDistance model t =
                 Time.inHours (t - model.currentTime)
             else
                 0.0
+
+        startTime =
+            if model.startTime == 0 then
+                t
+            else
+                 model.startTime
     in
         if model.speed > 0 then
             { model
                 | currentTime = t
-                , startTime =
-                    if model.startTime == 0 then
-                        t
-                    else
-                        model.startTime
+                , startTime = startTime
                 , distance = model.distance + (toFloat model.speed) * speed_increment * timeStep
             }
         else
@@ -249,11 +251,7 @@ formatTime ms =
         seconds =
             floor (Time.inSeconds (ms - (toFloat hours) * Time.hour - (toFloat minutes) * Time.minute))
 
-        times =
-            if hours > 0 then
-                [ hours, minutes, seconds ]
-            else
-                [ minutes, seconds ]
+        times = if hours > 0 then [hours, minutes, seconds] else [minutes, seconds]
     in
         List.map formatInt times
             |> String.join ":"
@@ -281,6 +279,15 @@ formatDistance d =
             ++ (toString meters_ones)
             ++ " km"
 
+formatSpeed : Float -> String
+formatSpeed speed =
+    let
+        -- My vocabulary is failing me
+        firstPart = floor speed
+        secondPart = floor ((speed - (toFloat firstPart)) * 10)
+    in
+        (toString firstPart) ++ "." ++ (toString secondPart)
+
 
 view : Model -> Html Msg
 view model =
@@ -290,7 +297,7 @@ view model =
             [ class "cpanel-readout" ]
             [ div
                 [ class "cpanel-readout-speed" ]
-                [ text ((toString ((toFloat model.speed) * speed_increment)) ++ " km/h") ]
+                [ text ((formatSpeed ((toFloat model.speed) * speed_increment)) ++ " km/h") ]
             , div
                 [ class "cpanel-readout-time" ]
                 [ text (formatTime (model.currentTime - model.startTime)) ]
