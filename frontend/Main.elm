@@ -1,9 +1,12 @@
 module Main exposing (..)
 
+import Common exposing (..)
 import ControlPanel
 import WorkoutList
-import Html exposing (program, Html)
 
+import Html exposing (program, Html, text, div)
+import Html.Attributes exposing (class)
+import Html.Events exposing (onClick)
 
 main =
     Html.program
@@ -17,11 +20,7 @@ main =
 type Msg
     = ControlPanelMsg ControlPanel.Msg
     | WorkoutListMsg WorkoutList.Msg
-
-
-type Screen
-    = ControlPanelScreen
-    | WorkoutListScreen
+    | ChangeScreen Screen
 
 
 type alias Model =
@@ -48,7 +47,7 @@ init =
     in
         { controlPanel = cpm
         , workoutList = wlm
-        , currentScreen = ControlPanelScreen
+        , currentScreen = MainMenuScreen
         }
             ! [ Cmd.map ControlPanelMsg cpc, Cmd.map WorkoutListMsg wlc ]
 
@@ -72,12 +71,30 @@ update msg model =
             in
                 ( { model | workoutList = wlm }, Cmd.map WorkoutListMsg wlc )
 
+        ChangeScreen s -> ( { model | currentScreen = s }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
+    div [] ( List.append [ div [ onClick (ChangeScreen MainMenuScreen)] [text "Back"], div [] [text "Screen Title"] ] [
     case model.currentScreen of
         ControlPanelScreen ->
             Html.map ControlPanelMsg (ControlPanel.view model.controlPanel)
 
         WorkoutListScreen ->
             Html.map WorkoutListMsg (WorkoutList.view model.workoutList)
+
+        MainMenuScreen ->
+            viewMainMenu])
+
+
+viewMainMenu : Html Msg
+viewMainMenu =
+    div [ class "mainmenu" ]
+        [ div [ class "menu-item", onClick (ChangeScreen ControlPanelScreen) ] [ text "Control Panel" ]
+        , div [ class "menu-item", onClick (ChangeScreen WorkoutListScreen)  ] [ text "Workouts" ]
+        , div [ class "menu-item" ] [ text "Run History" ]
+        , div [ class "menu-item" ] [ text "Training Schedule" ]
+        , div [ class "menu-item" ] [ text "Settings" ]
+        , div [ class "menu-item" ] [ text "Users" ]
+        ]

@@ -1,5 +1,7 @@
 module ControlPanel exposing (init, view, update, subscriptions, Model, Msg)
 
+import Common exposing (..)
+
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)

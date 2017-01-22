@@ -1,22 +1,12 @@
 module WorkoutList exposing (init, view, update, Model, Msg)
 
+import Common exposing (..)
+
 import Html exposing (..)
 import Time exposing (Time)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
-
-
-type alias WorkoutSegment =
-    { startTime : Time
-    , speed : Float
-    }
-
-
-type alias Workout =
-    { title : String
-    , segments : List WorkoutSegment
-    }
 
 
 type alias Model =
