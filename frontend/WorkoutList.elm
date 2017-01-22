@@ -1,7 +1,6 @@
 module WorkoutList exposing (init, view, update, Model, Msg)
 
 import Common exposing (..)
-
 import Html exposing (..)
 import Time exposing (Time)
 import Html.Attributes exposing (class)

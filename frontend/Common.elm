@@ -2,6 +2,7 @@ module Common exposing (..)
 
 import Time exposing (Time)
 
+
 type alias WorkoutSegment =
     { startTime : Time
     , speed : Float
@@ -20,5 +21,5 @@ type Screen
     | WorkoutListScreen
 
 
-type CommonMsg =
-    ChangeScreen Screen
+type CommonMsg
+    = ChangeScreen Screen
