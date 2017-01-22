@@ -6,6 +6,7 @@ import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
 
+
 type alias WorkoutSegment =
     { startTime : Time
     , speed : Float
@@ -23,7 +24,9 @@ type alias Model =
     }
 
 
-type Msg = Placeholder
+type Msg
+    = Placeholder
+
 
 init : ( Model, Cmd Msg )
 init =

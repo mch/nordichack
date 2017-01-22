@@ -100,7 +100,7 @@ updateTimeAndDistance model t =
             if model.startTime == 0 then
                 t
             else
-                 model.startTime
+                model.startTime
     in
         if model.speed > 0 then
             { model
@@ -242,7 +242,11 @@ formatTime ms =
         seconds =
             floor (Time.inSeconds (ms - (toFloat hours) * Time.hour - (toFloat minutes) * Time.minute))
 
-        times = if hours > 0 then [hours, minutes, seconds] else [minutes, seconds]
+        times =
+            if hours > 0 then
+                [ hours, minutes, seconds ]
+            else
+                [ minutes, seconds ]
     in
         List.map formatInt times
             |> String.join ":"
@@ -270,12 +274,16 @@ formatDistance d =
             ++ (toString meters_ones)
             ++ " km"
 
+
 formatSpeed : Float -> String
 formatSpeed speed =
     let
         -- My vocabulary is failing me
-        firstPart = floor speed
-        secondPart = floor ((speed - (toFloat firstPart)) * 10)
+        firstPart =
+            floor speed
+
+        secondPart =
+            floor ((speed - (toFloat firstPart)) * 10)
     in
         (toString firstPart) ++ "." ++ (toString secondPart)
 
