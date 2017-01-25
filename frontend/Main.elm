@@ -20,7 +20,7 @@ main =
 type Msg
     = ControlPanelMsg ControlPanelMsg
     | ChangeScreen Screen
-    | StartWorkout (Maybe WorkoutId) -- what if the user edits the current workout while doing the workout?
+    | StartWorkout (Maybe Workout)
     | EditWorkout WorkoutId
 
 
@@ -68,13 +68,13 @@ update msg model =
         ChangeScreen s ->
             ( { model | currentScreen = s }, Cmd.none )
 
-        StartWorkout workoutId ->
+        StartWorkout workout ->
             let
                 cpModel = model.controlPanel
             in
                 ( { model
                     | currentScreen = ControlPanelScreen
-                    , controlPanel = { cpModel | workoutId = workoutId } }
+                    , controlPanel = { cpModel | workout = workout } }
                 , Cmd.none )
 
         EditWorkout workoutId ->
@@ -163,7 +163,7 @@ type alias ControlPanelModel =
     , startTime : Float
     , currentTime : Float
     , distance : Float
-    , workoutId : Maybe WorkoutId
+    , workout : Maybe Workout
     , error : String
     }
 
@@ -185,7 +185,7 @@ controlPanelInit =
       , startTime = 0.0
       , currentTime = 0.0
       , distance = 0.0
-      , workoutId = Nothing
+      , workout = Nothing
       , error = ""
       }
     , Cmd.none
@@ -202,7 +202,7 @@ controlPanelUpdate msg model =
             let
                 ( m, c) = changeSpeed model 0
             in
-                ( { m | workoutId = Nothing }, c)
+                ( { m | workout = Nothing }, c)
 
         IncreaseSpeed ->
             increaseSpeed model
@@ -551,7 +551,7 @@ viewWorkout : Workout -> Html Msg
 viewWorkout workout =
     div
         [ class "workout-list-item"
-        , onClick (StartWorkout (Just workout.workoutId)) ]
+        , onClick (StartWorkout (Just workout)) ]
         [ text workout.title
         , button
             [ class "workout-list-item-edit", onClick (EditWorkout workout.workoutId) ]
