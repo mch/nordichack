@@ -465,10 +465,8 @@ viewCpanelWorkout currentTime workout =
                 Just workout ->
                     List.filter (\s -> s.startTime >= currentTime) workout.segments
 
-
         nextSegment =
-             List.head remainingSegments
-
+            List.head remainingSegments
 
         nextSegmentInfo =
             case nextSegment of
@@ -482,7 +480,8 @@ viewCpanelWorkout currentTime workout =
                         ]
                     else
                         [ text "You are almost done!"
-                        , text ((formatTime (segment.startTime - currentTime)) ++ " to go!") ]
+                        , text ((formatTime (segment.startTime - currentTime)) ++ " to go!")
+                        ]
     in
         case workout of
             Nothing ->
@@ -594,23 +593,23 @@ workoutListInit =
                     , { startTime = Time.minute * 7, speed = 0 }
                     ]
               }
-                , { title = "Very Short"
-                , workoutId = 1
-                , description = Just "Test"
-                , segments =
-                      [ { startTime = 0, speed = 4 }
-                      , { startTime = Time.second * 5, speed = 8 }
-                      , { startTime = Time.second * 10, speed = 0 }
-                      ]
-                }
-                , { title = "Unending"
-                , workoutId = 1
-                , description = Just "Test"
-                , segments =
-                      [ { startTime = 0, speed = 4 }
-                      , { startTime = Time.second * 5, speed = 8 }
-                      ]
-                }
+            , { title = "Very Short"
+              , workoutId = 1
+              , description = Just "Test"
+              , segments =
+                    [ { startTime = 0, speed = 4 }
+                    , { startTime = Time.second * 5, speed = 8 }
+                    , { startTime = Time.second * 10, speed = 0 }
+                    ]
+              }
+            , { title = "Unending"
+              , workoutId = 1
+              , description = Just "Test"
+              , segments =
+                    [ { startTime = 0, speed = 4 }
+                    , { startTime = Time.second * 5, speed = 8 }
+                    ]
+              }
             ]
       }
     , Cmd.none
