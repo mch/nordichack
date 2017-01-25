@@ -1,4 +1,26 @@
+/* Container for the app as a whole */
+.main {
 
+}
+
+.back-button {
+
+}
+
+.screen-title {
+
+}
+
+/* Main Menu */
+.mainmenu {
+
+}
+
+.menu-item {
+  
+}
+
+/* Control Panel */
 .cpanel {
     width: 100%;
     text-align: center;

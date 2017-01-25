@@ -77,9 +77,19 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        (List.append [ div [ onClick (ChangeScreen MainMenuScreen) ] [ text "Back" ], div [] [ text "Screen Title" ] ]
-            [ case model.currentScreen of
+    let
+        navbar =
+            [ div
+                [ class "back-button"
+                , onClick (ChangeScreen MainMenuScreen) ]
+                [ text "Back" ]
+            , div
+                [ class "screen-title" ]
+                [ text "Screen Title" ]
+            ]
+
+        content =
+            case model.currentScreen of
                 ControlPanelScreen ->
                     Html.map ControlPanelMsg (ControlPanel.view model.controlPanel)
 
@@ -88,8 +98,8 @@ view model =
 
                 MainMenuScreen ->
                     viewMainMenu
-            ]
-        )
+    in
+        div [ class "main" ] (List.append navbar [ content ])
 
 
 viewMainMenu : Html Msg

@@ -1,5 +1,9 @@
 module WorkoutList exposing (init, view, update, Model, Msg)
 
+-- I think this may end up containing only the view functions and specific
+-- update functions, but the Msg type should probably be moved to Common
+-- or Main.
+
 import Common exposing (..)
 import Html exposing (..)
 import Time exposing (Time)
