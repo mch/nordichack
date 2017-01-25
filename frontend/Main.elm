@@ -200,7 +200,7 @@ controlPanelUpdate msg model =
 
         Stop ->
             let
-                ( m, c) = changeSpeed model 0
+                ( m, c ) = changeSpeed model 0
             in
                 ( { m | workout = Nothing }, c)
 
@@ -372,6 +372,7 @@ controlPanelView model =
                 [ class "cpanel-readout-distance" ]
                 [ text (formatDistance model.distance) ]
             ]
+        , viewCpanelWorkout (model.currentTime - model.startTime) model.workout
         , div
             [ class "cpanel-buttons" ]
             [ button
@@ -433,6 +434,35 @@ controlPanelView model =
             ]
         , div [] [ text model.error ]
         ]
+
+viewCpanelWorkout : Time -> Maybe Workout -> Html ControlPanelMsg
+viewCpanelWorkout currentTime workout =
+    case workout of
+        Nothing ->
+            div [] []
+
+        Just w ->
+            div
+                [ class "cpanel-workout" ]
+                [ text w.title
+                , text ("Next Speed: " ++ "?")
+                , text ("In: " ++ nextWorkoutTime currentTime workout)
+                ]
+
+nextWorkoutTime : Time -> Maybe Workout -> String
+nextWorkoutTime currentTime workout =
+    -- This should be grouped with the workout data representation
+    let
+        nextSegment =
+            case workout of
+                Nothing -> Nothing
+                Just workout ->
+                    List.filter (\s -> s.startTime > currentTime) workout.segments |> List.head
+    in
+        case nextSegment of
+            Nothing -> ""
+            Just segment -> formatTime (segment.startTime - currentTime)
+
 
 formatInt : Int -> String
 formatInt n =
