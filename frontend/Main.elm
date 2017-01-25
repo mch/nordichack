@@ -437,31 +437,34 @@ controlPanelView model =
 
 viewCpanelWorkout : Time -> Maybe Workout -> Html ControlPanelMsg
 viewCpanelWorkout currentTime workout =
-    case workout of
-        Nothing ->
-            div [] []
-
-        Just w ->
-            div
-                [ class "cpanel-workout" ]
-                [ text w.title
-                , text ("Next Speed: " ++ "?")
-                , text ("In: " ++ nextWorkoutTime currentTime workout)
-                ]
-
-nextWorkoutTime : Time -> Maybe Workout -> String
-nextWorkoutTime currentTime workout =
-    -- This should be grouped with the workout data representation
     let
         nextSegment =
             case workout of
                 Nothing -> Nothing
                 Just workout ->
                     List.filter (\s -> s.startTime > currentTime) workout.segments |> List.head
+
+        nextSegmentTime =
+            case nextSegment of
+                Nothing -> ""
+                Just segment -> formatTime (segment.startTime - currentTime)
+
+        nextSegmentSpeed =
+            case nextSegment of
+                Nothing -> ""
+                Just segment -> (formatSpeed segment.speed) ++ " km/h"
     in
-        case nextSegment of
-            Nothing -> ""
-            Just segment -> formatTime (segment.startTime - currentTime)
+        case workout of
+            Nothing ->
+                div [] []
+
+            Just w ->
+                div
+                    [ class "cpanel-workout" ]
+                    [ text w.title
+                    , text ("Next Speed: " ++ nextSegmentSpeed)
+                    , text ("In: " ++ nextSegmentTime)
+                    ]
 
 
 formatInt : Int -> String
