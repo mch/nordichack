@@ -1,12 +1,12 @@
 module Main exposing (..)
 
 import Common exposing (..)
-
 import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
 import Time exposing (Time)
+
 
 main =
     Html.program
@@ -70,12 +70,15 @@ update msg model =
 
         StartWorkout workout ->
             let
-                cpModel = model.controlPanel
+                cpModel =
+                    model.controlPanel
             in
                 ( { model
                     | currentScreen = ControlPanelScreen
-                    , controlPanel = { cpModel | workout = workout } }
-                , Cmd.none )
+                    , controlPanel = { cpModel | workout = workout }
+                  }
+                , Cmd.none
+                )
 
         EditWorkout workoutId ->
             ( model, Cmd.none )
@@ -87,7 +90,8 @@ view model =
         backButton =
             div
                 [ class "back-button"
-                , onClick (ChangeScreen MainMenuScreen) ]
+                , onClick (ChangeScreen MainMenuScreen)
+                ]
                 [ text "Back" ]
 
         screenTitle =
@@ -126,12 +130,15 @@ viewMainMenu =
         , div [ class "menu-item" ] [ text "Users" ]
         ]
 
+
+
 -- Control Panel...
+
 
 speed_increment : Float
 speed_increment =
--- Speed is represented as an integer in increments of 0.2 to avoid
--- floating point fun.
+    -- Speed is represented as an integer in increments of 0.2 to avoid
+    -- floating point fun.
     0.2
 
 
@@ -200,9 +207,10 @@ controlPanelUpdate msg model =
 
         Stop ->
             let
-                ( m, c ) = changeSpeed model 0
+                ( m, c ) =
+                    changeSpeed model 0
             in
-                ( { m | workout = Nothing }, c)
+                ( { m | workout = Nothing }, c )
 
         IncreaseSpeed ->
             increaseSpeed model
@@ -435,24 +443,33 @@ controlPanelView model =
         , div [] [ text model.error ]
         ]
 
+
 viewCpanelWorkout : Time -> Maybe Workout -> Html ControlPanelMsg
 viewCpanelWorkout currentTime workout =
     let
         nextSegment =
             case workout of
-                Nothing -> Nothing
+                Nothing ->
+                    Nothing
+
                 Just workout ->
                     List.filter (\s -> s.startTime > currentTime) workout.segments |> List.head
 
         nextSegmentTime =
             case nextSegment of
-                Nothing -> ""
-                Just segment -> formatTime (segment.startTime - currentTime)
+                Nothing ->
+                    ""
+
+                Just segment ->
+                    formatTime (segment.startTime - currentTime)
 
         nextSegmentSpeed =
             case nextSegment of
-                Nothing -> ""
-                Just segment -> (formatSpeed segment.speed) ++ " km/h"
+                Nothing ->
+                    ""
+
+                Just segment ->
+                    (formatSpeed segment.speed) ++ " km/h"
     in
         case workout of
             Nothing ->
@@ -534,7 +551,10 @@ formatSpeed speed =
     in
         (toString firstPart) ++ "." ++ (toString secondPart)
 
+
+
 -- Workout List...
+
 
 type alias WorkoutListModel =
     { workoutList : List Workout
@@ -550,8 +570,8 @@ workoutListInit =
               , segments =
                     [ { startTime = 0, speed = 4 }
                     , { startTime = Time.minute * 2, speed = 8 }
-                    , { startTime = Time.minute * 28, speed = 4}
-                    , { startTime = Time.minute * 30, speed = 0}
+                    , { startTime = Time.minute * 28, speed = 4 }
+                    , { startTime = Time.minute * 30, speed = 0 }
                     ]
               }
             , { title = "C5K Week 1"
@@ -560,8 +580,8 @@ workoutListInit =
               , segments =
                     [ { startTime = 0, speed = 4 }
                     , { startTime = Time.minute * 5, speed = 8 }
-                    , { startTime = Time.minute * 5 + Time.second * 60, speed = 2}
-                    , { startTime = Time.minute * 7, speed = 0}
+                    , { startTime = Time.minute * 5 + Time.second * 60, speed = 2 }
+                    , { startTime = Time.minute * 7, speed = 0 }
                     ]
               }
             ]
@@ -580,12 +600,15 @@ viewWorkoutListItem model =
     div [ class "workout-list" ]
         (List.map viewWorkout model.workoutList)
 
+
 viewWorkout : Workout -> Html Msg
 viewWorkout workout =
     div
         [ class "workout-list-item"
-        , onClick (StartWorkout (Just workout)) ]
+        , onClick (StartWorkout (Just workout))
+        ]
         [ text workout.title
         , button
             [ class "workout-list-item-edit", onClick (EditWorkout workout.workoutId) ]
-            [ text "Edit" ] ]
+            [ text "Edit" ]
+        ]
