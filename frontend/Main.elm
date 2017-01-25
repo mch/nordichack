@@ -203,7 +203,17 @@ controlPanelUpdate : ControlPanelMsg -> ControlPanelModel -> ( ControlPanelModel
 controlPanelUpdate msg model =
     case msg of
         Start ->
-            changeSpeed model initialSpeed
+            case model.workout of
+                Nothing ->
+                    changeSpeed model initialSpeed
+
+                Just w ->
+                    case List.head w.segments of
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                        Just segment ->
+                            changeSpeed model (round (segment.speed / speed_increment))
 
         Stop ->
             let
@@ -286,7 +296,7 @@ updateSpeed model result =
         starting =
             model.speed == 0 && model.requestedSpeed /= 0
 
-        stoping =
+        stopping =
             model.speed /= 0 && model.requestedSpeed == 0
 
         updateModel =
@@ -431,12 +441,12 @@ controlPanelView model =
             []
             [ button
                 [ class "cpanel-start-button"
-                , onClick (SetSpeed 10)
+                , onClick Start
                 ]
                 [ text "Start" ]
             , button
                 [ class "cpanel-stop-button"
-                , onClick (SetSpeed 0)
+                , onClick Stop
                 ]
                 [ text "Stop" ]
             ]
@@ -447,24 +457,32 @@ controlPanelView model =
 viewCpanelWorkout : Time -> Maybe Workout -> Html ControlPanelMsg
 viewCpanelWorkout currentTime workout =
     let
-        nextSegment =
+        remainingSegments =
             case workout of
                 Nothing ->
-                    Nothing
+                    []
 
                 Just workout ->
-                    List.filter (\s -> s.startTime >= currentTime) workout.segments |> List.head
+                    List.filter (\s -> s.startTime >= currentTime) workout.segments
+
+
+        nextSegment =
+             List.head remainingSegments
 
 
         nextSegmentInfo =
             case nextSegment of
                 Nothing ->
-                    [ text "You are almost done! Keep going!" ]
+                    [ text "Your workout has no end. Touch stop when you get tired." ]
 
                 Just segment ->
-                    [ text ("Next Speed: " ++ ((formatSpeed segment.speed) ++ " km/h"))
-                    , text ("In: " ++ (formatTime (segment.startTime - currentTime)))
-                    ]
+                    if List.length remainingSegments > 1 && segment.speed > 0 then
+                        [ text ("Next Speed: " ++ ((formatSpeed segment.speed) ++ " km/h"))
+                        , text ("In: " ++ (formatTime (segment.startTime - currentTime)))
+                        ]
+                    else
+                        [ text "You are almost done!"
+                        , text ((formatTime (segment.startTime - currentTime)) ++ " to go!") ]
     in
         case workout of
             Nothing ->
@@ -576,6 +594,23 @@ workoutListInit =
                     , { startTime = Time.minute * 7, speed = 0 }
                     ]
               }
+                , { title = "Very Short"
+                , workoutId = 1
+                , description = Just "Test"
+                , segments =
+                      [ { startTime = 0, speed = 4 }
+                      , { startTime = Time.second * 5, speed = 8 }
+                      , { startTime = Time.second * 10, speed = 0 }
+                      ]
+                }
+                , { title = "Unending"
+                , workoutId = 1
+                , description = Just "Test"
+                , segments =
+                      [ { startTime = 0, speed = 4 }
+                      , { startTime = Time.second * 5, speed = 8 }
+                      ]
+                }
             ]
       }
     , Cmd.none
