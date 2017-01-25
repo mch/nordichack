@@ -19,8 +19,9 @@ main =
 
 type Msg
     = ControlPanelMsg ControlPanelMsg
-    | WorkoutListMsg WorkoutListMsg
     | ChangeScreen Screen
+    | StartWorkout (Maybe WorkoutId) -- what if the user edits the current workout while doing the workout?
+    | EditWorkout WorkoutId
 
 
 type alias Model =
@@ -49,7 +50,7 @@ init =
         , workoutList = wlm
         , currentScreen = MainMenuScreen
         }
-            ! [ Cmd.map ControlPanelMsg cpc, Cmd.map WorkoutListMsg wlc ]
+            ! [ Cmd.map ControlPanelMsg cpc, wlc ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,29 +65,41 @@ update msg model =
             in
                 ( { model | controlPanel = cpm }, Cmd.map ControlPanelMsg cpc )
 
-        WorkoutListMsg m ->
-            let
-                ( wlm, wlc ) =
-                    workoutListUpdate m model.workoutList
-            in
-                ( { model | workoutList = wlm }, Cmd.map WorkoutListMsg wlc )
-
         ChangeScreen s ->
             ( { model | currentScreen = s }, Cmd.none )
+
+        StartWorkout workoutId ->
+            let
+                cpModel = model.controlPanel
+            in
+                ( { model
+                    | currentScreen = ControlPanelScreen
+                    , controlPanel = { cpModel | workoutId = workoutId } }
+                , Cmd.none )
+
+        EditWorkout workoutId ->
+            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
     let
-        navbar =
-            [ div
+        backButton =
+            div
                 [ class "back-button"
                 , onClick (ChangeScreen MainMenuScreen) ]
                 [ text "Back" ]
-            , div
+
+        screenTitle =
+            div
                 [ class "screen-title" ]
-                [ text "Screen Title" ]
-            ]
+                [ text "NordicHack" ]
+
+        navbar =
+            if model.currentScreen == MainMenuScreen then
+                [ screenTitle ]
+            else
+                [ backButton, screenTitle ]
 
         content =
             case model.currentScreen of
@@ -94,7 +107,7 @@ view model =
                     Html.map ControlPanelMsg (controlPanelView model.controlPanel)
 
                 WorkoutListScreen ->
-                    Html.map WorkoutListMsg (workoutListView model.workoutList)
+                    viewWorkoutListItem model.workoutList
 
                 MainMenuScreen ->
                     viewMainMenu
@@ -132,6 +145,10 @@ max_speed_increment =
     30 * 5
 
 
+initialSpeed =
+    2 * 5
+
+
 controlPanelSubscriptions : ControlPanelModel -> Sub ControlPanelMsg
 controlPanelSubscriptions model =
     -- If I used animation timing, I'd be able to display milliseconds
@@ -146,12 +163,15 @@ type alias ControlPanelModel =
     , startTime : Float
     , currentTime : Float
     , distance : Float
+    , workoutId : Maybe WorkoutId
     , error : String
     }
 
 
 type ControlPanelMsg
-    = IncreaseSpeed
+    = Start
+    | Stop
+    | IncreaseSpeed
     | DecreaseSpeed
     | SetSpeed Int
     | SetSpeedResponse (Result Http.Error String)
@@ -165,6 +185,7 @@ controlPanelInit =
       , startTime = 0.0
       , currentTime = 0.0
       , distance = 0.0
+      , workoutId = Nothing
       , error = ""
       }
     , Cmd.none
@@ -174,6 +195,15 @@ controlPanelInit =
 controlPanelUpdate : ControlPanelMsg -> ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 controlPanelUpdate msg model =
     case msg of
+        Start ->
+            changeSpeed model initialSpeed
+
+        Stop ->
+            let
+                ( m, c) = changeSpeed model 0
+            in
+                ( { m | workoutId = Nothing }, c)
+
         IncreaseSpeed ->
             increaseSpeed model
 
@@ -478,17 +508,27 @@ type alias WorkoutListModel =
     }
 
 
-type WorkoutListMsg
-    = Placeholder
-
-
-workoutListInit : ( WorkoutListModel, Cmd WorkoutListMsg )
+workoutListInit : ( WorkoutListModel, Cmd Msg )
 workoutListInit =
     ( { workoutList =
             [ { title = "Basic"
+              , description = Nothing
+              , workoutId = 0
               , segments =
-                    [ { startTime = 0, speed = 2 }
-                    , { startTime = Time.second * 120, speed = 8 }
+                    [ { startTime = 0, speed = 4 }
+                    , { startTime = Time.minute * 2, speed = 8 }
+                    , { startTime = Time.minute * 28, speed = 4}
+                    , { startTime = Time.minute * 30, speed = 0}
+                    ]
+              }
+            , { title = "C5K Week 1"
+              , workoutId = 1
+              , description = Just "Brisk five-minute warmup walk. Then alternate 60 seconds of jogging and 90 seconds of walking for a total of 20 minutes."
+              , segments =
+                    [ { startTime = 0, speed = 4 }
+                    , { startTime = Time.minute * 5, speed = 8 }
+                    , { startTime = Time.minute * 5 + Time.second * 60, speed = 2}
+                    , { startTime = Time.minute * 7, speed = 0}
                     ]
               }
             ]
@@ -497,12 +537,22 @@ workoutListInit =
     )
 
 
-workoutListUpdate : WorkoutListMsg -> WorkoutListModel -> ( WorkoutListModel, Cmd WorkoutListMsg )
+workoutListUpdate : Msg -> WorkoutListModel -> ( WorkoutListModel, Cmd Msg )
 workoutListUpdate msg model =
     ( model, Cmd.none )
 
 
-workoutListView : WorkoutListModel -> Html WorkoutListMsg
-workoutListView model =
+viewWorkoutListItem : WorkoutListModel -> Html Msg
+viewWorkoutListItem model =
     div [ class "workout-list" ]
-        [ text "Hello world" ]
+        (List.map viewWorkout model.workoutList)
+
+viewWorkout : Workout -> Html Msg
+viewWorkout workout =
+    div
+        [ class "workout-list-item"
+        , onClick (StartWorkout (Just workout.workoutId)) ]
+        [ text workout.title
+        , button
+            [ class "workout-list-item-edit", onClick (EditWorkout workout.workoutId) ]
+            [ text "Edit" ] ]
