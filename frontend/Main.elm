@@ -453,23 +453,18 @@ viewCpanelWorkout currentTime workout =
                     Nothing
 
                 Just workout ->
-                    List.filter (\s -> s.startTime > currentTime) workout.segments |> List.head
+                    List.filter (\s -> s.startTime >= currentTime) workout.segments |> List.head
 
-        nextSegmentTime =
+
+        nextSegmentInfo =
             case nextSegment of
                 Nothing ->
-                    ""
+                    [ text "You are almost done! Keep going!" ]
 
                 Just segment ->
-                    formatTime (segment.startTime - currentTime)
-
-        nextSegmentSpeed =
-            case nextSegment of
-                Nothing ->
-                    ""
-
-                Just segment ->
-                    (formatSpeed segment.speed) ++ " km/h"
+                    [ text ("Next Speed: " ++ ((formatSpeed segment.speed) ++ " km/h"))
+                    , text ("In: " ++ (formatTime (segment.startTime - currentTime)))
+                    ]
     in
         case workout of
             Nothing ->
@@ -478,10 +473,7 @@ viewCpanelWorkout currentTime workout =
             Just w ->
                 div
                     [ class "cpanel-workout" ]
-                    [ text w.title
-                    , text ("Next Speed: " ++ nextSegmentSpeed)
-                    , text ("In: " ++ nextSegmentTime)
-                    ]
+                    ((text w.title) :: nextSegmentInfo)
 
 
 formatInt : Int -> String
