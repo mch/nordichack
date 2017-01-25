@@ -235,7 +235,8 @@ controlPanelUpdate msg model =
             ( updateSpeed model result, Cmd.none )
 
         Tick t ->
-            ( updateTimeAndDistance model t, Cmd.none )
+            updateTimeAndDistance model t
+                |> segmentSpeedCheck
 
 
 updateTimeAndDistance : ControlPanelModel -> Time.Time -> ControlPanelModel
@@ -264,6 +265,31 @@ updateTimeAndDistance model t =
             }
         else
             model
+
+
+segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
+segmentSpeedCheck model =
+    let
+        segments =
+            case model.workout of
+                Nothing ->
+                    []
+
+                Just workout ->
+                    List.filter (\s -> s.startTime <= model.currentTime - model.startTime) workout.segments
+
+        currentSegment =
+            List.head (List.drop ((List.length segments) - 1) segments)
+    in
+        case currentSegment of
+            Nothing ->
+                ( model, Cmd.none )
+
+            Just segment ->
+                if model.requestedSpeed > 0 && round (segment.speed / speed_increment) /= model.requestedSpeed then
+                    changeSpeed model (round (segment.speed / speed_increment))
+                else
+                    ( model, Cmd.none )
 
 
 increaseSpeed : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
@@ -354,7 +380,7 @@ changeSpeed model requestedSpeed =
     then
         ( { model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed )
     else
-        ( model, Cmd.none )
+        ( { model | error = "Invalid speed " ++ (formatSpeed ((toFloat requestedSpeed) * speed_increment)) ++ " requested." }, Cmd.none )
 
 
 postSpeedChange : Int -> Cmd ControlPanelMsg
