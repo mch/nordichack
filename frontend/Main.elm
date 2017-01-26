@@ -75,12 +75,14 @@ update msg model =
                 cpModel =
                     model.controlPanel
 
+                segments = Maybe.withDefault [] (Maybe.map (\w -> w.segments) workout)
+
                 (freshCpModel, _) = controlPanelInit
             in
                 if model.controlPanel.speed == 0 && model.controlPanel.requestedSpeed == 0 then
                     ( { model
                         | currentScreen = ControlPanelScreen
-                        , controlPanel = { freshCpModel | workout = workout }
+                        , controlPanel = { freshCpModel | workout = workout, remainingSegments = segments }
                       }
                     , Cmd.none
                     )
@@ -177,12 +179,19 @@ controlPanelSubscriptions model =
 
 
 type alias ControlPanelModel =
+    -- This has the possibility of a lot of invalid states. E.g. speed,
+    -- currentTime, startTime, and distance are only valid once a workout
+    -- has started and the treadmill has responded that it's at a certain speed.
+    -- What if start is pressed when it is already running? etc. I've already
+    -- had problems with starting a workout when the treadmill is already
+    -- running...
     { speed : Int
     , requestedSpeed : Int
     , startTime : Float
     , currentTime : Float
     , distance : Float
     , workout : Maybe Workout
+    , remainingSegments : List WorkoutSegment
     , error : String
     }
 
@@ -205,6 +214,7 @@ controlPanelInit =
       , currentTime = 0.0
       , distance = 0.0
       , workout = Nothing
+      , remainingSegments = []
       , error = ""
       }
     , Cmd.none
@@ -215,24 +225,19 @@ controlPanelUpdate : ControlPanelMsg -> ControlPanelModel -> ( ControlPanelModel
 controlPanelUpdate msg model =
     case msg of
         Start ->
-            case model.workout of
-                Nothing ->
+            case model.remainingSegments of
+                [] ->
                     changeSpeed model initialSpeed
 
-                Just w ->
-                    case List.head w.segments of
-                        Nothing ->
-                            ( model, Cmd.none )
-
-                        Just segment ->
-                            changeSpeed model (round (segment.speed / speed_increment))
+                segment::_ ->
+                    changeSpeed model (round (segment.speed / speed_increment))
 
         Stop ->
             let
                 ( m, c ) =
                     changeSpeed model 0
             in
-                ( { m | workout = Nothing }, c )
+                ( { m | workout = Nothing, remainingSegments = [] }, c )
 
         IncreaseSpeed ->
             increaseSpeed model
@@ -282,26 +287,32 @@ updateTimeAndDistance model t =
 segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 segmentSpeedCheck model =
     let
-        segments =
-            case model.workout of
-                Nothing ->
-                    []
+        zipped =
+            List.map2 (\a b -> (a, b)) model.remainingSegments (List.drop 1 model.remainingSegments)
 
-                Just workout ->
-                    List.filter (\s -> s.startTime <= model.currentTime - model.startTime) workout.segments
+        filteredSegments =
+            List.filter (\(a,b) -> b.startTime >= (model.currentTime - model.startTime)) zipped
+
+        segments =
+            (List.map (\(a, b) -> a) filteredSegments)
+                |> (\l -> List.append l (List.drop (List.length model.remainingSegments - 1) model.remainingSegments))
 
         currentSegment =
-            List.head (List.drop ((List.length segments) - 1) segments)
+            List.head segments
     in
         case currentSegment of
             Nothing ->
                 ( model, Cmd.none )
 
             Just segment ->
-                if model.requestedSpeed > 0 && round (segment.speed / speed_increment) /= model.requestedSpeed then
-                    changeSpeed model (round (segment.speed / speed_increment))
-                else
-                    ( model, Cmd.none )
+                let
+                    (updatedModel, cmd) =
+                        if List.length segments < List.length model.remainingSegments then
+                            changeSpeed model (round (segment.speed / speed_increment))
+                        else
+                            (model, Cmd.none)
+                in
+                    ( { updatedModel | remainingSegments = segments }, cmd )
 
 
 increaseSpeed : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
