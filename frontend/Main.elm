@@ -73,12 +73,20 @@ update msg model =
                 cpModel =
                     model.controlPanel
             in
-                ( { model
-                    | currentScreen = ControlPanelScreen
-                    , controlPanel = { cpModel | workout = workout }
-                  }
-                , Cmd.none
-                )
+                if model.controlPanel.speed == 0 then
+                    ( { model
+                        | currentScreen = ControlPanelScreen
+                        , controlPanel = { cpModel | workout = workout }
+                      }
+                    , Cmd.none
+                    )
+                else
+                    ( { model
+                        | currentScreen = ControlPanelScreen
+                        , controlPanel = { cpModel | error = "Workout already in progress." }
+                      }
+                    , Cmd.none
+                    )
 
         EditWorkout workoutId ->
             ( model, Cmd.none )
