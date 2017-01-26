@@ -69,14 +69,18 @@ update msg model =
             ( { model | currentScreen = s }, Cmd.none )
 
         StartWorkout workout ->
+            -- A lot of this code should be in the control panel update fn,
+            -- since we are primarially messing with it's state.
             let
                 cpModel =
                     model.controlPanel
+
+                (freshCpModel, _) = controlPanelInit
             in
-                if model.controlPanel.speed == 0 then
+                if model.controlPanel.speed == 0 && model.controlPanel.requestedSpeed == 0 then
                     ( { model
                         | currentScreen = ControlPanelScreen
-                        , controlPanel = { cpModel | workout = workout }
+                        , controlPanel = { freshCpModel | workout = workout }
                       }
                     , Cmd.none
                     )
@@ -424,7 +428,7 @@ controlPanelView model =
                 [ class "cpanel-readout-distance" ]
                 [ text (formatDistance model.distance) ]
             ]
-        , viewCpanelWorkout (model.currentTime - model.startTime) model.workout
+        , viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout
         , div
             [ class "cpanel-buttons" ]
             [ button
@@ -488,8 +492,8 @@ controlPanelView model =
         ]
 
 
-viewCpanelWorkout : Time -> Maybe Workout -> Html ControlPanelMsg
-viewCpanelWorkout currentTime workout =
+viewCpanelWorkout : Int -> Time -> Maybe Workout -> Html ControlPanelMsg
+viewCpanelWorkout speed currentTime workout =
     let
         remainingSegments =
             case workout of
@@ -505,16 +509,23 @@ viewCpanelWorkout currentTime workout =
         nextSegmentInfo =
             case nextSegment of
                 Nothing ->
-                    [ text "Your workout has no end. Touch stop when you get tired." ]
+                    [ div
+                        [ class "cpanel-workout" ]
+                        [ if speed > 0 then
+                              text "Your workout has no end. Touch stop when you get tired."
+                          else
+                              text "You did it!"
+                        ]
+                    ]
 
                 Just segment ->
                     if List.length remainingSegments > 1 && segment.speed > 0 then
-                        [ text ("Next Speed: " ++ ((formatSpeed segment.speed) ++ " km/h"))
-                        , text ("In: " ++ (formatTime (segment.startTime - currentTime)))
+                        [ div [ class "cpanel-workout" ] [ text ("Next Speed: " ++ ((formatSpeed segment.speed) ++ " km/h")) ]
+                        , div [ class "cpanel-workout" ] [ text ("In: " ++ (formatTime (segment.startTime - currentTime))) ]
                         ]
                     else
-                        [ text "You are almost done!"
-                        , text ((formatTime (segment.startTime - currentTime)) ++ " to go!")
+                        [ div [ class "cpanel-workout" ] [ text "You are almost done!" ]
+                        , div [ class "cpanel-workout" ] [ text ((formatTime (segment.startTime - currentTime)) ++ " to go!") ]
                         ]
     in
         case workout of
@@ -524,7 +535,7 @@ viewCpanelWorkout currentTime workout =
             Just w ->
                 div
                     [ class "cpanel-workout" ]
-                    ((text w.title) :: nextSegmentInfo)
+                    ( (div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo )
 
 
 formatInt : Int -> String
