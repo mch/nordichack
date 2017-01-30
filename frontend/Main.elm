@@ -1,6 +1,8 @@
 module Main exposing (..)
 
 import Common exposing (..)
+import Workout exposing (Workout, WorkoutSegment, WorkoutId, fromIntervalDuration)
+
 import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -184,7 +186,9 @@ type alias ControlPanelModel =
     -- has started and the treadmill has responded that it's at a certain speed.
     -- What if start is pressed when it is already running? etc. I've already
     -- had problems with starting a workout when the treadmill is already
-    -- running...
+    -- running... What if the workout sets the speed to one value, but then
+    -- the user overrides? How do we keep track of what the current speed of
+    -- the workout is?
     { speed : Int
     , requestedSpeed : Int
     , startTime : Float
@@ -283,7 +287,7 @@ updateTimeAndDistance model t =
         else
             model
 
-
+{- Did the current workout segment change? If so change the speed accordingly. -}
 segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 segmentSpeedCheck model =
     let
