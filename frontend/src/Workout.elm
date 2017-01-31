@@ -52,12 +52,15 @@ type alias WorkoutId =
 
 
 {-| Create a workout from a list of (Time, speed) tuples -}
-fromIntervalDuration : String -> Maybe String -> Int -> List (Time, Float) -> Workout
-fromIntervalDuration title description id data =
+fromIntervalDuration : String -> Maybe String -> Int -> Float -> List (Time, Float) -> Workout
+fromIntervalDuration title description id initialSpeed data =
+    let
+        timeAndSpeed = (0, initialSpeed) :: data
+    in
     { title = title
     , description = description
     , workoutId = id
-    , segments = List.map (\(t, s) -> { startTime = t, speed = s }) data
+    , segments = List.map (\(t, s) -> { startTime = t, speed = s }) timeAndSpeed
     }
 
 
