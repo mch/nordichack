@@ -51,9 +51,7 @@ type alias WorkoutId =
     Int
 
 
-{-| Create a workout from a list of (Time, speed) tuples
-
--}
+{-| Create a workout from a list of (Time, speed) tuples -}
 fromIntervalDuration : String -> Maybe String -> Int -> List (Time, Float) -> Workout
 fromIntervalDuration title description id data =
     { title = title
@@ -69,6 +67,11 @@ run, the current segment, and the next segment.
 getCurrentSegments : Time -> Workout -> Maybe (Int, WorkoutSegment, WorkoutSegment)
 getCurrentSegments t w =
     let
+        endSegment =
+            List.drop (List.length w.segments - 1) w.segments
+            |> List.head
+            |> Maybe.withDefault {startTime = 0, speed = 0}
+
         -- For an segment list [s0, s1, ..., sn], create an offset list [s1, s2, ..., sn, sn]
         offsetList =
             List.append (List.drop 1 w.segments) (List.drop (List.length w.segments - 1) w.segments)
@@ -78,10 +81,14 @@ getCurrentSegments t w =
             List.map2 (,) w.segments offsetList
 
         -- Index them
-        indexList = List.indexedMap (\i (a, b) -> (i, a, b)) zipped
+        indexList =
+            List.indexedMap (\i (a, b) -> (i, a, b)) zipped
     in
-        List.filter (\(i, a, b) -> a.startTime >= t && b.startTime < t) indexList
-        |> List.head
+        if t >= endSegment.startTime then
+            Just (List.length w.segments - 1, endSegment, endSegment)
+        else
+            List.filter (\(i, a, b) -> t >= a.startTime && t < b.startTime) indexList
+            |> List.head
 
 
 {-| Returns the speed the treadmill should be set to for a given time point. -}
