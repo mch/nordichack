@@ -1,4 +1,4 @@
-module Workout exposing (Workout, WorkoutSegment, WorkoutId, fromIntervalDuration, getSpeed, getIndex)
+module Workout exposing (Workout, WorkoutSegment, WorkoutId, fromIntervalDuration, getSpeed, getIndex, getSegment)
 
 import Time exposing (Time)
 
@@ -116,3 +116,12 @@ getIndex t w =
             Nothing -> Nothing
 
             Just (i, a, b) -> Just i
+
+getSegment t w =
+    let
+        currentSegments = getCurrentSegments t w
+    in
+        case currentSegments of
+            Nothing -> Nothing
+
+            Just (i, a, b) -> Just a

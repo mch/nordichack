@@ -13,6 +13,7 @@ all =
         "Workout Test Suite"
         [ getIndexTests
         , getSpeedTests
+        , getSegmentTests
         ]
 
 getIndexTests : Test
@@ -40,6 +41,18 @@ getSpeedTests =
             , test "speed at t = 20" (getSpeedTest w 20 0)
             ]
 
+getSegmentTests : Test
+getSegmentTests =
+    let
+        w = fromIntervalDuration "Test" Nothing 0 2 [(10, 4), (20, 0)]
+    in
+        describe "Getting a segment works"
+            [ test "First segment" (getSegmentTest 0 w (Just { startTime = 0, speed = 2 }))
+            , test "Second segment" (getSegmentTest 10 w (Just { startTime = 10, speed = 4 }))
+            , test "-1 segement" (getSegmentTest -1 w Nothing)
+
+            ]
+
 getIndexTest : Float -> Maybe Int -> (() -> Expect.Expectation)
 getIndexTest t e =
     let
@@ -52,3 +65,6 @@ getIndexTest t e =
 
 getSpeedTest w t e =
     \() -> Expect.equal e (getSpeed t w)
+
+getSegmentTest w t e =
+    \() -> Expect.equal e (getSegment w t)
