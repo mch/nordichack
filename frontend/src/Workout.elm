@@ -96,6 +96,7 @@ getCurrentSegments t w =
 
 {-| Returns the speed the treadmill should be set to for a given time point. -}
 getSpeed : Time -> Workout -> Float
+-- Client code might actually be simpler if this returned Maybe Float
 getSpeed t w =
     let
         currentSegments = getCurrentSegments t w

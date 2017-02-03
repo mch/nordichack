@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Common exposing (..)
-import Workout exposing (Workout, WorkoutSegment, WorkoutId, fromIntervalDuration)
+import Workout exposing (..)
 
 import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
@@ -77,14 +77,12 @@ update msg model =
                 cpModel =
                     model.controlPanel
 
-                segments = Maybe.withDefault [] (Maybe.map (\w -> w.segments) workout)
-
                 (freshCpModel, _) = controlPanelInit
             in
                 if model.controlPanel.speed == 0 && model.controlPanel.requestedSpeed == 0 then
                     ( { model
                         | currentScreen = ControlPanelScreen
-                        , controlPanel = { freshCpModel | workout = workout, remainingSegments = segments }
+                        , controlPanel = { freshCpModel | workout = workout, nextSegment = Just 0 }
                       }
                     , Cmd.none
                     )
@@ -195,7 +193,7 @@ type alias ControlPanelModel =
     , currentTime : Float
     , distance : Float
     , workout : Maybe Workout
-    , remainingSegments : List WorkoutSegment
+    , nextSegment : Maybe Int
     , error : String
     }
 
@@ -218,7 +216,7 @@ controlPanelInit =
       , currentTime = 0.0
       , distance = 0.0
       , workout = Nothing
-      , remainingSegments = []
+      , nextSegment = Nothing
       , error = ""
       }
     , Cmd.none
@@ -229,19 +227,18 @@ controlPanelUpdate : ControlPanelMsg -> ControlPanelModel -> ( ControlPanelModel
 controlPanelUpdate msg model =
     case msg of
         Start ->
-            case model.remainingSegments of
-                [] ->
+            case model.workout of
+                Nothing ->
                     changeSpeed model initialSpeed
 
-                segment::_ ->
-                    changeSpeed model (round (segment.speed / speed_increment))
+                Just w ->
+                    changeSpeed model (round (getSpeed (model.currentTime - model.startTime) w / speed_increment))
 
         Stop ->
             let
-                ( m, c ) =
-                    changeSpeed model 0
+                ( m, c ) = changeSpeed model 0
             in
-                ( { m | workout = Nothing, remainingSegments = [] }, c )
+                ( { m | workout = Nothing }, c )
 
         IncreaseSpeed ->
             increaseSpeed model
@@ -291,32 +288,33 @@ updateTimeAndDistance model t =
 segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 segmentSpeedCheck model =
     let
-        zipped =
-            List.map2 (\a b -> (a, b)) model.remainingSegments (List.drop 1 model.remainingSegments)
-
-        filteredSegments =
-            List.filter (\(a,b) -> b.startTime >= (model.currentTime - model.startTime)) zipped
-
-        segments =
-            (List.map (\(a, b) -> a) filteredSegments)
-                |> (\l -> List.append l (List.drop (List.length model.remainingSegments - 1) model.remainingSegments))
+        elapsedTime =
+            model.currentTime - model.startTime
 
         currentSegment =
-            List.head segments
-    in
-        case currentSegment of
-            Nothing ->
-                ( model, Cmd.none )
+            Maybe.andThen (getIndex elapsedTime) model.workout
 
-            Just segment ->
+        nextSpeed =
+            case model.workout of
+                Nothing ->
+                    0
+
+                Just w ->
+                    getSpeed elapsedTime w
+                    |> (/) speed_increment
+                    |> round
+
+        foo c n =
+            if c >= n then
                 let
-                    (updatedModel, cmd) =
-                        if List.length segments < List.length model.remainingSegments then
-                            changeSpeed model (round (segment.speed / speed_increment))
-                        else
-                            (model, Cmd.none)
+                    ( nextModel, cmd ) = changeSpeed model nextSpeed
                 in
-                    ( { updatedModel | remainingSegments = segments }, cmd )
+                    ( { nextModel | nextSegment = Just (c + 1) }, cmd )
+            else
+                ( model, Cmd.none )
+    in
+        Maybe.map2 foo currentSegment model.nextSegment
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 increaseSpeed : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
