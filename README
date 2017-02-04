@@ -6,7 +6,7 @@ includes many Icon Fitness treadmills under various brand names such as
 Epic, NordicTrack, Proform, Reebok, and probably others. Use the part search
 form at [Icon Service Canada](https://www.iconservice.ca/CustomerService/parts)
 or [Icon Service](https://www.iconservice.com/CustomerService/parts.do) to
-search for part number 263165 to see if your model might work. 
+search for part number 263165 to see if your model might work.
 
 The long term goal is to allow for control of treadmill speed and incline, easy
 contruction of traing programs, and recording fitness data, including heart rate
@@ -40,9 +40,9 @@ programs and recording runs.
 
 ## UI
 
-The front end is written in Elm. Unfortunatly the Elm compiler is not available
+The front end is written in Elm. Unfortunately the Elm compiler is not available
 on the Raspberry Pi, so it is necessary to build the frontend on a Windows, Mac,
-or Linux machine. 
+or Linux machine.
 
 # Installing
 
@@ -63,13 +63,8 @@ pip install flask
 pip install pyzmq
 export FLASK_APP=nordichack.py
 export FLASK_DEBUG=1
-flask run --host=0.0.0.0
-...
 deactivate
 ```
 
-The front end is written in Elm. Unfortunatly the Elm compiler is not available
-on the Raspberry Pi, so it is necessary to build the frontend on a Windows, Mac,
-or Linux machine. 
-
-
+Once that is set up, you can run the web server using the provided
+`run-server.sh` script.
