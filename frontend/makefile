@@ -4,7 +4,7 @@ dev: controller.js deploy
 prod: controller.min.js deploy-prod
 .PHONY: prod
 
-controller.js: src/Main.elm
+controller.js: src/*.elm
 	elm-make $^ --output $@
 
 controller.min.js: controller.js
