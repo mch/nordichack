@@ -168,6 +168,66 @@ decreaseSpeed model =
         ( { model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed )
 
 
+{- Did the current workout segment change? If so change the speed accordingly. -}
+segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
+segmentSpeedCheck model =
+    let
+        elapsedTime =
+            model.currentTime - model.startTime
+
+        currentSegment =
+            Maybe.andThen (getIndex elapsedTime) model.workout
+
+        nextSpeed =
+            case model.workout of
+                Nothing ->
+                    0
+
+                Just w ->
+                    getSpeed elapsedTime w
+                    |> (/) speed_increment
+                    |> round
+
+        foo c n =
+            if c >= n then
+                let
+                    ( nextModel, cmd ) = changeSpeed model nextSpeed
+                in
+                    ( { nextModel | nextSegment = Just (c + 1) }, cmd )
+            else
+                ( model, Cmd.none )
+    in
+        Maybe.map2 foo currentSegment model.nextSegment
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
+{- Did the current workout segment change? If so return the new speed to change to. -}
+checkForSpeedChange : Time -> Maybe Int -> Maybe Workout -> Maybe Int
+checkForSpeedChange elapsedTime nextSegmentId workout =
+    let
+        currentSegment =
+            Maybe.andThen (getIndex elapsedTime) workout
+
+        nextSpeed =
+            case workout of
+                Nothing ->
+                    0
+
+                Just w ->
+                    getSpeed elapsedTime w
+                    |> (\x -> x / speed_increment)
+                    |> round
+
+        compareSegmentIds c n =
+            if c >= n then
+                Just nextSpeed |> Debug.log "next speed"
+            else
+                Nothing
+    in
+        Maybe.map2 compareSegmentIds currentSegment nextSegmentId
+        |> Maybe.withDefault Nothing
+
+
 updateSpeed : ControlPanelModel -> Result Http.Error String -> ControlPanelModel
 updateSpeed model result =
     let
@@ -444,36 +504,3 @@ formatSpeed speed =
             floor ((speed - (toFloat firstPart)) * 10)
     in
         (toString firstPart) ++ "." ++ (toString secondPart)
-
-
-{- Did the current workout segment change? If so change the speed accordingly. -}
-segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
-segmentSpeedCheck model =
-    let
-        elapsedTime =
-            model.currentTime - model.startTime
-
-        currentSegment =
-            Maybe.andThen (getIndex elapsedTime) model.workout
-
-        nextSpeed =
-            case model.workout of
-                Nothing ->
-                    0
-
-                Just w ->
-                    getSpeed elapsedTime w
-                    |> (/) speed_increment
-                    |> round
-
-        foo c n =
-            if c >= n then
-                let
-                    ( nextModel, cmd ) = changeSpeed model nextSpeed
-                in
-                    ( { nextModel | nextSegment = Just (c + 1) }, cmd )
-            else
-                ( model, Cmd.none )
-    in
-        Maybe.map2 foo currentSegment model.nextSegment
-        |> Maybe.withDefault ( model, Cmd.none )
