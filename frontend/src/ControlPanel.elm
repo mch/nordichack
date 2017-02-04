@@ -172,33 +172,14 @@ decreaseSpeed model =
 segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 segmentSpeedCheck model =
     let
-        elapsedTime =
-            model.currentTime - model.startTime
+        elapsedTime = model.currentTime - model.startTime
 
-        currentSegment =
-            Maybe.andThen (getIndex elapsedTime) model.workout
-
-        nextSpeed =
-            case model.workout of
-                Nothing ->
-                    0
-
-                Just w ->
-                    getSpeed elapsedTime w
-                    |> (/) speed_increment
-                    |> round
-
-        foo c n =
-            if c >= n then
-                let
-                    ( nextModel, cmd ) = changeSpeed model nextSpeed
-                in
-                    ( { nextModel | nextSegment = Just (c + 1) }, cmd )
-            else
-                ( model, Cmd.none )
+        nextSpeed = checkForSpeedChange elapsedTime model.nextSegment model.workout
     in
-        Maybe.map2 foo currentSegment model.nextSegment
-        |> Maybe.withDefault ( model, Cmd.none )
+        case nextSpeed of
+            Nothing -> ( model, Cmd.none )
+
+            Just s -> changeSpeed model s
 
 
 {- Did the current workout segment change? If so return the new speed to change to. -}
