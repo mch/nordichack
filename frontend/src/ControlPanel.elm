@@ -189,15 +189,14 @@ checkForSpeedChange elapsedTime nextSegmentId workout =
         currentSegment =
             Maybe.andThen (getIndex elapsedTime) workout
 
-        nextSpeed =
-            case workout of
-                Nothing ->
-                    0
+        computeNextSpeed w =
+            getSpeed elapsedTime w
+            |> (\x -> x / speed_increment)
+            |> round
 
-                Just w ->
-                    getSpeed elapsedTime w
-                    |> (\x -> x / speed_increment)
-                    |> round
+        nextSpeed =
+            Maybe.map computeNextSpeed workout
+            |> Maybe.withDefault 0
 
         compareSegmentIds c n =
             if c >= n then
