@@ -82,7 +82,7 @@ controlPanelInit =
       , currentTime = 0.0
       , distance = 0.0
       , workout = Nothing
-      , nextSegment = Nothing
+      , nextSegment = Nothing -- THIS IS NOT GETTING UPDATED PROPERLY!
       , error = ""
       , log = []
       }
@@ -90,16 +90,29 @@ controlPanelInit =
     )
 
 
+invalidSpeedErrorMessage speed =
+    "Invalid speed " ++ (formatSpeed ((toFloat speed) * speed_increment)) ++ " requested."
+
+getWorkoutSpeed w model =
+     round (getSpeed (model.currentTime - model.startTime) w / speed_increment)
+
 controlPanelUpdate : ControlPanelMsg -> ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 controlPanelUpdate msg model =
     case msg of
         Start ->
             case model.workout of
                 Nothing ->
-                    changeSpeed model initialSpeed
+                    validateRequestedSpeed initialSpeed
+                    |> Maybe.map (\x -> { model | requestedSpeed = x})
+                    |> Maybe.map (\x -> (x, postSpeedChange x.requestedSpeed))
+                    |> Maybe.withDefault ( {model | error = invalidSpeedErrorMessage initialSpeed}, Cmd.none)
 
                 Just w ->
-                    changeSpeed model (round (getSpeed (model.currentTime - model.startTime) w / speed_increment))
+                    getWorkoutSpeed w model
+                    |> validateRequestedSpeed
+                    |> Maybe.map (\x -> { model | requestedSpeed = x})
+                    |> Maybe.map (\x -> (x, postSpeedChange x.requestedSpeed))
+                    |> Maybe.withDefault ( {model | error = invalidSpeedErrorMessage initialSpeed}, Cmd.none)
 
         Stop ->
             let
@@ -201,17 +214,23 @@ segmentSpeedCheck model =
         nextSpeed = checkForSpeedChange elapsedTime model.nextSegment model.workout
     in
         case nextSpeed of
-            Nothing -> ( model, Cmd.none )
+            Nothing ->
+                ( model, Cmd.none )
 
-            Just s -> changeSpeed model s
+            Just s ->
+                let
+                    ( m, cmd ) = changeSpeed model s
+                in
+                    ( { m | nextSegment = Maybe.map (\x -> x + 1) model.nextSegment }, cmd )
 
 
 {- Did the current workout segment change? If so return the new speed to change to. -}
 checkForSpeedChange : Time -> Maybe Int -> Maybe Workout -> Maybe Int
 checkForSpeedChange elapsedTime nextSegmentId workout =
     let
+        _ = Debug.log "next" nextSegmentId
         currentSegment =
-            Maybe.andThen (getIndex elapsedTime) workout
+            Maybe.andThen (getIndex elapsedTime) workout |> Debug.log "current"
 
         computeNextSpeed w =
             getSpeed elapsedTime w
@@ -299,6 +318,20 @@ changeSpeed model requestedSpeed =
         ( { model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed )
     else
         ( { model | error = "Invalid speed " ++ (formatSpeed ((toFloat requestedSpeed) * speed_increment)) ++ " requested." }, Cmd.none )
+
+
+validateRequestedSpeed : Int -> Maybe Int
+validateRequestedSpeed requestedSpeed =
+    if requestedSpeed == 0
+            || (requestedSpeed
+                    >= min_speed_increment
+                    && requestedSpeed
+                    <= max_speed_increment
+               )
+    then
+        Just requestedSpeed
+    else
+        Nothing
 
 
 postSpeedChange : Int -> Cmd ControlPanelMsg

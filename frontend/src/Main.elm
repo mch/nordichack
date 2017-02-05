@@ -83,7 +83,7 @@ update msg model =
                 if model.controlPanel.speed == 0 && model.controlPanel.requestedSpeed == 0 then
                     ( { model
                         | currentScreen = ControlPanelScreen
-                        , controlPanel = { freshCpModel | workout = workout, nextSegment = Just 0 }
+                        , controlPanel = { freshCpModel | workout = workout, nextSegment = Just 1 }
                       }
                     , Cmd.none
                     )
