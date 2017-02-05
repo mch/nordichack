@@ -90,35 +90,20 @@ controlPanelInit =
     )
 
 
-invalidSpeedErrorMessage speed =
-    "Invalid speed " ++ (formatSpeed ((toFloat speed) * speed_increment)) ++ " requested."
-
-getWorkoutSpeed w model =
-     round (getSpeed (model.currentTime - model.startTime) w / speed_increment)
-
 controlPanelUpdate : ControlPanelMsg -> ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
 controlPanelUpdate msg model =
     case msg of
         Start ->
             case model.workout of
                 Nothing ->
-                    validateRequestedSpeed initialSpeed
-                    |> Maybe.map (\x -> { model | requestedSpeed = x})
-                    |> Maybe.map (\x -> (x, postSpeedChange x.requestedSpeed))
-                    |> Maybe.withDefault ( {model | error = invalidSpeedErrorMessage initialSpeed}, Cmd.none)
+                    changeSpeed model initialSpeed
 
                 Just w ->
                     getWorkoutSpeed w model
-                    |> validateRequestedSpeed
-                    |> Maybe.map (\x -> { model | requestedSpeed = x})
-                    |> Maybe.map (\x -> (x, postSpeedChange x.requestedSpeed))
-                    |> Maybe.withDefault ( {model | error = invalidSpeedErrorMessage initialSpeed}, Cmd.none)
+                    |> changeSpeed model
 
         Stop ->
-            let
-                ( m, c ) = changeSpeed model 0
-            in
-                ( { m | workout = Nothing }, c )
+            changeSpeed model 0
 
         IncreaseSpeed ->
             increaseSpeed model
@@ -141,8 +126,14 @@ controlPanelUpdate msg model =
                 ( model2, cmd )
 
         Tick t ->
-            updateTimeAndDistance model t
-                |> segmentSpeedCheck
+            let
+                model2 = updateTimeAndDistance model t
+                elapsedTime = model.currentTime - model.startTime
+                nextSpeed = checkForSpeedChange elapsedTime model.nextSegment model.workout
+            in
+                Maybe.map (changeSpeed model) nextSpeed
+                |> Maybe.map (\(m,c) -> ({ m | nextSegment = Maybe.map (\x -> x + 1) m.nextSegment},c))
+                |> Maybe.withDefault ( model2, Cmd.none )
 
         SaveLogResponse result ->
              case result of
@@ -205,32 +196,12 @@ decreaseSpeed model =
         ( { model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed )
 
 
-{- Did the current workout segment change? If so change the speed accordingly. -}
-segmentSpeedCheck : ControlPanelModel -> ( ControlPanelModel, Cmd ControlPanelMsg )
-segmentSpeedCheck model =
-    let
-        elapsedTime = model.currentTime - model.startTime
-
-        nextSpeed = checkForSpeedChange elapsedTime model.nextSegment model.workout
-    in
-        case nextSpeed of
-            Nothing ->
-                ( model, Cmd.none )
-
-            Just s ->
-                let
-                    ( m, cmd ) = changeSpeed model s
-                in
-                    ( { m | nextSegment = Maybe.map (\x -> x + 1) model.nextSegment }, cmd )
-
-
 {- Did the current workout segment change? If so return the new speed to change to. -}
 checkForSpeedChange : Time -> Maybe Int -> Maybe Workout -> Maybe Int
 checkForSpeedChange elapsedTime nextSegmentId workout =
     let
-        _ = Debug.log "next" nextSegmentId
         currentSegment =
-            Maybe.andThen (getIndex elapsedTime) workout |> Debug.log "current"
+            Maybe.andThen (getIndex elapsedTime) workout
 
         computeNextSpeed w =
             getSpeed elapsedTime w
@@ -243,7 +214,7 @@ checkForSpeedChange elapsedTime nextSegmentId workout =
 
         compareSegmentIds c n =
             if c >= n then
-                Just nextSpeed |> Debug.log "next speed"
+                Just nextSpeed
             else
                 Nothing
     in
@@ -304,20 +275,19 @@ stringifyError error =
             "Bad payload"
 
 
-changeSpeed : ControlPanelModel -> Int -> ( ControlPanelModel, Cmd ControlPanelMsg )
-changeSpeed model requestedSpeed =
-    if
-        requestedSpeed
-            == 0
-            || (requestedSpeed
-                    >= min_speed_increment
-                    && requestedSpeed
-                    <= max_speed_increment
-               )
-    then
-        ( { model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed )
-    else
-        ( { model | error = "Invalid speed " ++ (formatSpeed ((toFloat requestedSpeed) * speed_increment)) ++ " requested." }, Cmd.none )
+changeSpeed model speed =
+    validateRequestedSpeed speed
+    |> Maybe.map (\x -> { model | requestedSpeed = x})
+    |> Maybe.map (\x -> (x, postSpeedChange x.requestedSpeed))
+    |> Maybe.withDefault ( {model | error = invalidSpeedErrorMessage initialSpeed}, Cmd.none)
+
+
+invalidSpeedErrorMessage speed =
+    "Invalid speed " ++ (formatSpeed ((toFloat speed) * speed_increment)) ++ " requested."
+
+
+getWorkoutSpeed w model =
+     round (getSpeed (model.currentTime - model.startTime) w / speed_increment)
 
 
 validateRequestedSpeed : Int -> Maybe Int
