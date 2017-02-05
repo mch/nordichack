@@ -6,8 +6,8 @@ import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
 import Json.Encode
 import Time exposing (Time)
-
 import Workout exposing (..)
+
 
 speed_increment : Float
 speed_increment =
@@ -37,10 +37,12 @@ controlPanelSubscriptions model =
     -- cost to power consumption?
     Time.every (Time.second * 0.1) Tick
 
+
 type alias LogDataPoint =
-    { time: Time
-    , speed: Int
+    { time : Time
+    , speed : Int
     }
+
 
 type alias ControlPanelModel =
     -- This has the possibility of a lot of invalid states. E.g. speed,
@@ -82,7 +84,7 @@ controlPanelInit =
       , currentTime = 0.0
       , distance = 0.0
       , workout = Nothing
-      , nextSegment = Nothing -- THIS IS NOT GETTING UPDATED PROPERLY!
+      , nextSegment = Nothing
       , error = ""
       , log = []
       }
@@ -100,7 +102,7 @@ controlPanelUpdate msg model =
 
                 Just w ->
                     getWorkoutSpeed w model
-                    |> changeSpeed model
+                        |> changeSpeed model
 
         Stop ->
             changeSpeed model 0
@@ -116,7 +118,9 @@ controlPanelUpdate msg model =
 
         SetSpeedResponse result ->
             let
-                model2 = updateSpeed model result
+                model2 =
+                    updateSpeed model result
+
                 cmd =
                     if model2.speed == 0 then
                         postLog model.log
@@ -127,20 +131,25 @@ controlPanelUpdate msg model =
 
         Tick t ->
             let
-                model2 = updateTimeAndDistance model t
-                elapsedTime = model.currentTime - model.startTime
-                nextSpeed = checkForSpeedChange elapsedTime model.nextSegment model.workout
+                model2 =
+                    updateTimeAndDistance model t
+
+                elapsedTime =
+                    model.currentTime - model.startTime
+
+                nextSpeed =
+                    checkForSpeedChange elapsedTime model.nextSegment model.workout
             in
                 Maybe.map (changeSpeed model) nextSpeed
-                |> Maybe.map (\(m,c) -> ({ m | nextSegment = Maybe.map (\x -> x + 1) m.nextSegment},c))
-                |> Maybe.withDefault ( model2, Cmd.none )
+                    |> Maybe.map (\( m, c ) -> ( { m | nextSegment = Maybe.map (\x -> x + 1) m.nextSegment }, c ))
+                    |> Maybe.withDefault ( model2, Cmd.none )
 
         SaveLogResponse result ->
-             case result of
-                 Ok response ->
-                     ( model, Cmd.none )
+            case result of
+                Ok response ->
+                    ( model, Cmd.none )
 
-                 Err error ->
+                Err error ->
                     ( { model | error = stringifyError error }, Cmd.none )
 
 
@@ -196,7 +205,10 @@ decreaseSpeed model =
         ( { model | requestedSpeed = requestedSpeed }, postSpeedChange requestedSpeed )
 
 
+
 {- Did the current workout segment change? If so return the new speed to change to. -}
+
+
 checkForSpeedChange : Time -> Maybe Int -> Maybe Workout -> Maybe Int
 checkForSpeedChange elapsedTime nextSegmentId workout =
     let
@@ -205,12 +217,12 @@ checkForSpeedChange elapsedTime nextSegmentId workout =
 
         computeNextSpeed w =
             getSpeed elapsedTime w
-            |> (\x -> x / speed_increment)
-            |> round
+                |> (\x -> x / speed_increment)
+                |> round
 
         nextSpeed =
             Maybe.map computeNextSpeed workout
-            |> Maybe.withDefault 0
+                |> Maybe.withDefault 0
 
         compareSegmentIds c n =
             if c >= n then
@@ -219,7 +231,7 @@ checkForSpeedChange elapsedTime nextSegmentId workout =
                 Nothing
     in
         Maybe.map2 compareSegmentIds currentSegment nextSegmentId
-        |> Maybe.withDefault Nothing
+            |> Maybe.withDefault Nothing
 
 
 updateSpeed : ControlPanelModel -> Result Http.Error String -> ControlPanelModel
@@ -277,9 +289,9 @@ stringifyError error =
 
 changeSpeed model speed =
     validateRequestedSpeed speed
-    |> Maybe.map (\x -> { model | requestedSpeed = x})
-    |> Maybe.map (\x -> (x, postSpeedChange x.requestedSpeed))
-    |> Maybe.withDefault ( {model | error = invalidSpeedErrorMessage initialSpeed}, Cmd.none)
+        |> Maybe.map (\x -> { model | requestedSpeed = x })
+        |> Maybe.map (\x -> ( x, postSpeedChange x.requestedSpeed ))
+        |> Maybe.withDefault ( { model | error = invalidSpeedErrorMessage initialSpeed }, Cmd.none )
 
 
 invalidSpeedErrorMessage speed =
@@ -287,12 +299,14 @@ invalidSpeedErrorMessage speed =
 
 
 getWorkoutSpeed w model =
-     round (getSpeed (model.currentTime - model.startTime) w / speed_increment)
+    round (getSpeed (model.currentTime - model.startTime) w / speed_increment)
 
 
 validateRequestedSpeed : Int -> Maybe Int
 validateRequestedSpeed requestedSpeed =
-    if requestedSpeed == 0
+    if
+        requestedSpeed
+            == 0
             || (requestedSpeed
                     >= min_speed_increment
                     && requestedSpeed
@@ -326,11 +340,12 @@ postLog log =
     let
         encodeEntry e =
             Json.Encode.object
-                [ ("time", Json.Encode.float e.time)
-                , ("speed", Json.Encode.int e.speed)
+                [ ( "time", Json.Encode.float e.time )
+                , ( "speed", Json.Encode.int e.speed )
                 ]
 
-        encodedLog = Json.Encode.list (List.map encodeEntry log)
+        encodedLog =
+            Json.Encode.list (List.map encodeEntry log)
 
         req =
             Http.request
@@ -446,9 +461,9 @@ viewCpanelWorkout speed currentTime workout =
                     [ div
                         [ class "cpanel-workout" ]
                         [ if speed > 0 then
-                              text "Your workout has no end. Touch stop when you get tired."
+                            text "Your workout has no end. Touch stop when you get tired."
                           else
-                              text "You did it!"
+                            text "You did it!"
                         ]
                     ]
 
@@ -469,7 +484,7 @@ viewCpanelWorkout speed currentTime workout =
             Just w ->
                 div
                     [ class "cpanel-workout" ]
-                    ( (div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo )
+                    ((div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo)
 
 
 formatInt : Int -> String
