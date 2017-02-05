@@ -4,6 +4,7 @@ import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
+import Json.Encode
 import Time exposing (Time)
 
 import Workout exposing (..)
@@ -36,6 +37,10 @@ controlPanelSubscriptions model =
     -- cost to power consumption?
     Time.every (Time.second * 0.1) Tick
 
+type alias LogDataPoint =
+    { time: Time
+    , speed: Int
+    }
 
 type alias ControlPanelModel =
     -- This has the possibility of a lot of invalid states. E.g. speed,
@@ -54,6 +59,7 @@ type alias ControlPanelModel =
     , workout : Maybe Workout
     , nextSegment : Maybe Int
     , error : String
+    , log : List LogDataPoint
     }
 
 
@@ -65,6 +71,7 @@ type ControlPanelMsg
     | SetSpeed Int
     | SetSpeedResponse (Result Http.Error String)
     | Tick Time.Time
+    | SaveLogResponse (Result Http.Error String)
 
 
 controlPanelInit : ( ControlPanelModel, Cmd ControlPanelMsg )
@@ -77,6 +84,7 @@ controlPanelInit =
       , workout = Nothing
       , nextSegment = Nothing
       , error = ""
+      , log = []
       }
     , Cmd.none
     )
@@ -109,11 +117,27 @@ controlPanelUpdate msg model =
             changeSpeed model speed
 
         SetSpeedResponse result ->
-            ( updateSpeed model result, Cmd.none )
+            let
+                model2 = updateSpeed model result
+                cmd =
+                    if model2.speed == 0 then
+                        postLog model.log
+                    else
+                        Cmd.none
+            in
+                ( model2, cmd )
 
         Tick t ->
             updateTimeAndDistance model t
                 |> segmentSpeedCheck
+
+        SaveLogResponse result ->
+             case result of
+                 Ok response ->
+                     ( model, Cmd.none )
+
+                 Err error ->
+                    ( { model | error = stringifyError error }, Cmd.none )
 
 
 updateTimeAndDistance : ControlPanelModel -> Time.Time -> ControlPanelModel
@@ -226,11 +250,13 @@ updateSpeed model result =
                     , currentTime = 0.0
                     , distance = 0.0
                     , error = ""
+                    , log = [ LogDataPoint 0.0 model.requestedSpeed ]
                 }
             else
                 { model
                     | speed = model.requestedSpeed
                     , error = ""
+                    , log = LogDataPoint (model.currentTime - model.startTime) model.requestedSpeed :: model.log
                 }
     in
         case result of
@@ -290,6 +316,31 @@ postSpeedChange requestedSpeed =
                 }
     in
         Http.send (\r -> SetSpeedResponse r) req
+
+
+postLog : List LogDataPoint -> Cmd ControlPanelMsg
+postLog log =
+    let
+        encodeEntry e =
+            Json.Encode.object
+                [ ("time", Json.Encode.float e.time)
+                , ("speed", Json.Encode.int e.speed)
+                ]
+
+        encodedLog = Json.Encode.list (List.map encodeEntry log)
+
+        req =
+            Http.request
+                { method = "POST"
+                , headers = []
+                , url = "/api/v1/runs"
+                , body = Http.jsonBody encodedLog
+                , expect = expectString
+                , timeout = Just (Time.second * 2.5)
+                , withCredentials = False
+                }
+    in
+        Http.send (\r -> SaveLogResponse r) req
 
 
 controlPanelView : ControlPanelModel -> Html ControlPanelMsg

@@ -2,8 +2,10 @@ module ControlPanelTests exposing (..)
 
 import Test exposing (..)
 import Expect
+import Http
 import Fuzz exposing (list, int, tuple, string)
 import String
+
 
 import ControlPanel exposing (..)
 import Workout exposing (..)
@@ -13,6 +15,8 @@ all =
     describe
         "Control Panel Test Suite"
         [ checkForSpeedChangeTests
+        , speedChangesAreLogged
+        --, endingRunSubmitsLog
         ]
 
 fixture =
@@ -58,3 +62,66 @@ checkForSpeedChangeTests =
                 checkForSpeedChange 20 (Just 2) fixture.workout
                 |> Expect.equal (Just 0)
         ]
+
+speedChangesAreLogged : Test
+speedChangesAreLogged =
+    describe "Speed changes are logged for a run"
+        [ test "First response logs a speed change" <|
+            \_ ->
+                let
+                    ( model, _ ) = controlPanelInit
+                in
+                    updateSpeed { model | requestedSpeed = 2 } (Result.Ok "OK")
+                    |> .log
+                    |> Expect.equalLists [{ time = 0, speed = 2 }]
+        , test "Response after start logs a speed change" <|
+            \_ ->
+                let
+                    -- Does Elm have threadable record updates? Or is this what people
+                    -- keep complaining about.
+                    ( model1, _ ) = controlPanelInit
+                    model2 = { model1
+                        | log = [ LogDataPoint 0.0 2 ]
+                        , startTime = 0
+                        , currentTime = 2
+                        , requestedSpeed = 4
+                        , speed = 2 }
+                in
+                    updateSpeed model2 (Result.Ok "OK")
+                    |> .log
+                    |> Expect.equalLists [ {time = 2, speed = 4}, {time = 0, speed = 2} ]
+        ]
+
+{-endingRunSubmitsLog : Test
+endingRunSubmitsLog =
+    describe "Logged data points are submitted to server when run ends."
+        [ test "Stop is touched" <|
+            \_ ->
+                let
+                    ( model1, _ ) = controlPanelInit
+                    model2 = { model1 | log = [LogDataPoint 3 3, LogDataPoint 2 2, LogDataPoint 1 1, LogDataPoint 0 2] }
+                    ( _, cmd ) = controlPanelUpdate Stop model2
+                in
+                    -- Not sure how to compare Cmd for equality... I guess I have to unit test
+                    -- before things turn into Cmd's? So that means that update functions
+                    -- can't be tested for returned Cmd's?
+                    Expect.equal (SaveLogResponse (Result.Ok "OK")) cmd
+        {-, test "Workout ends" <|
+            \_ ->
+                let
+                    ( model1, _ ) = controlPanelInit
+                    model2 = { model1 | log = [LogDataPoint 3 3, LogDataPoint 2 2, LogDataPoint 1 1, LogDataPoint 0 2] }
+                    ( _, cmd ) = controlPanelUpdate Stop model2
+                in
+                    Expect.equal Nothing cmd
+        -}
+        , test "Failure to store log show error message" <|
+            \_ ->
+                let
+                    ( model1, _ ) = controlPanelInit
+                    model2 = { model1 | log = [LogDataPoint 3 3, LogDataPoint 2 2, LogDataPoint 1 1, LogDataPoint 0 2] }
+                    ( model3, _ ) = controlPanelUpdate (SaveLogResponse (Result.Err Http.Timeout)) model2
+                in
+                    Expect.equal "Timeout" model3.error
+        ]
+-}
