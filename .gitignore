@@ -6,3 +6,9 @@
 
 a.out
 controller/controller
+venv
+controller.js
+yarn.lock
+elm-stuff
+node_modules
+data/
