@@ -525,14 +525,20 @@ formatDistance d =
         meters_thousands =
             floor (d)
 
+        remainder = d - (toFloat meters_thousands)
+
         meters_hundreds =
-            floor ((d * 10 - (toFloat meters_thousands)))
+            floor (remainder * 10)
+
+        remainder2 = (remainder * 10) - (toFloat meters_hundreds)
 
         meters_tens =
-            floor ((d * 100 - (toFloat meters_hundreds)))
+            floor (remainder2 * 10)
+
+        remainder3 = (remainder2 * 10) - (toFloat meters_tens)
 
         meters_ones =
-            floor ((d * 1000 - (toFloat meters_tens)))
+            floor (remainder3 * 10)
     in
         (toString meters_thousands)
             ++ "."

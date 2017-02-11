@@ -17,6 +17,7 @@ all =
         [ checkForSpeedChangeTests
         , speedChangesAreLogged
         --, endingRunSubmitsLog
+        , formatDistanceTests
         ]
 
 fixture =
@@ -125,3 +126,12 @@ endingRunSubmitsLog =
                     Expect.equal "Timeout" model3.error
         ]
 -}
+
+formatDistanceTests =
+    describe "Distances are formatted as strings properly"
+        [ test "thousandths" <| \_ -> Expect.equal "0.001 km" <| formatDistance 0.001
+        , test "hundredths" <| \_ -> Expect.equal "0.010 km" <| formatDistance 0.01
+        , test "tenths" <| \_ -> Expect.equal "0.100 km" <| formatDistance 0.1
+        , test "ones" <| \_ -> Expect.equal "1.000 km" <| formatDistance 1.0
+        , test "tens" <| \_ -> Expect.equal "10.000 km" <| formatDistance 10.0
+        ]
