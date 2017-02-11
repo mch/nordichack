@@ -522,15 +522,24 @@ formatTime ms =
 formatDistance : Float -> String
 formatDistance d =
     let
-        meters_thousands =
+        integer_part =
             floor (d)
 
-        remainder = d - (toFloat meters_thousands)
+        factional_part = d - (toFloat integer_part)
+
+        f (input, output) =
+            let
+                next = input * 10
+                position = floor next
+            in
+                (next - (toFloat position), List.append output [position])
+
+        (r, l) = f (factional_part, [])
 
         meters_hundreds =
-            floor (remainder * 10)
+            floor (factional_part * 10)
 
-        remainder2 = (remainder * 10) - (toFloat meters_hundreds)
+        remainder2 = (factional_part * 10) - (toFloat meters_hundreds)
 
         meters_tens =
             floor (remainder2 * 10)
@@ -540,12 +549,13 @@ formatDistance d =
         meters_ones =
             floor (remainder3 * 10)
     in
-        (toString meters_thousands)
+        (toString integer_part)
             ++ "."
             ++ (toString meters_hundreds)
             ++ (toString meters_tens)
             ++ (toString meters_ones)
-            ++ " km"
+            ++ " km - "
+            ++ (toString l)
 
 
 formatSpeed : Float -> String
