@@ -534,28 +534,13 @@ formatDistance d =
             in
                 (next - (toFloat position), List.append output [position])
 
-        (r, l) = f (factional_part, [])
+        (r, l) = (f >> f >> f) (factional_part, [])
 
-        meters_hundreds =
-            floor (factional_part * 10)
-
-        remainder2 = (factional_part * 10) - (toFloat meters_hundreds)
-
-        meters_tens =
-            floor (remainder2 * 10)
-
-        remainder3 = (remainder2 * 10) - (toFloat meters_tens)
-
-        meters_ones =
-            floor (remainder3 * 10)
     in
         (toString integer_part)
             ++ "."
-            ++ (toString meters_hundreds)
-            ++ (toString meters_tens)
-            ++ (toString meters_ones)
-            ++ " km - "
-            ++ (toString l)
+            ++ (String.join "" <| List.map toString l)
+            ++ " km"
 
 
 formatSpeed : Float -> String
