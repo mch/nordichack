@@ -4,6 +4,7 @@ import Test exposing (..)
 
 import WorkoutTests
 import ControlPanelTests
+import PrintFTests
 
 all : Test
 all =
@@ -11,4 +12,5 @@ all =
         "NordicHack"
         [ WorkoutTests.all
         , ControlPanelTests.all
+        , PrintFTests.all
         ]

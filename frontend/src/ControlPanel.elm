@@ -7,6 +7,7 @@ import Http exposing (send, request, stringBody, expectString)
 import Json.Encode
 import Time exposing (Time)
 import Workout exposing (..)
+import PrintF exposing (..)
 
 
 speed_increment : Float
@@ -521,35 +522,7 @@ formatTime ms =
 
 formatDistance : Float -> String
 formatDistance d =
-    let
-        integer_part =
-            floor (d)
-
-        fractional_part = d - (toFloat integer_part)
-
-        positionToString (remainder, output) =
-            let
-                next = remainder * 10
-                position = floor next
-            in
-                (next - (toFloat position), output ++ (toString position))
-
-        fractionalToString fractional positions =
-            let
-                helper (remainder, output) positions =
-                    if positions <= 0 then
-                        (remainder, output)
-                    else
-                        helper (positionToString (remainder, output)) (positions - 1)
-
-                (_, fractionalString) = helper (fractional, "") 3
-            in
-                fractionalString
-    in
-        (toString integer_part)
-            ++ "."
-            ++ fractionalToString fractional_part 3
-            ++ " km"
+    formatFloat d 3 ++ " km"
 
 
 formatSpeed : Float -> String
