@@ -124,7 +124,7 @@ controlPanelUpdate msg model =
 
                 cmd =
                     if model2.speed == 0 then
-                        postLog model.log
+                        postLog (List.reverse model2.log)
                     else
                         Cmd.none
             in
