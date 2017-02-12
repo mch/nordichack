@@ -525,21 +525,30 @@ formatDistance d =
         integer_part =
             floor (d)
 
-        factional_part = d - (toFloat integer_part)
+        fractional_part = d - (toFloat integer_part)
 
-        f (input, output) =
+        positionToString (remainder, output) =
             let
-                next = input * 10
+                next = remainder * 10
                 position = floor next
             in
-                (next - (toFloat position), List.append output [position])
+                (next - (toFloat position), output ++ (toString position))
 
-        (r, l) = (f >> f >> f) (factional_part, [])
+        fractionalToString fractional positions =
+            let
+                helper (remainder, output) positions =
+                    if positions <= 0 then
+                        (remainder, output)
+                    else
+                        helper (positionToString (remainder, output)) (positions - 1)
 
+                (_, fractionalString) = helper (fractional, "") 3
+            in
+                fractionalString
     in
         (toString integer_part)
             ++ "."
-            ++ (String.join "" <| List.map toString l)
+            ++ fractionalToString fractional_part 3
             ++ " km"
 
 
