@@ -406,40 +406,29 @@ viewCpanelSpeedButtons =
         ]
 
 
+type alias SpeedPreset = { label: String, speed: Int }
+
+
 viewCpanelPresetButtons =
-    div
-        []
-        [ button
-            [ class "cpanel-preset-button"
-            , onClick (SetSpeed 10)
+    let
+        presets =
+            [ SpeedPreset "2" 10
+            , SpeedPreset "4" 20
+            , SpeedPreset "6" 30
+            , SpeedPreset "8" 40
+            , SpeedPreset "10" 50
+            , SpeedPreset "12" 60
             ]
-            [ text "2" ]
-        , button
-            [ class "cpanel-preset-button"
-            , onClick (SetSpeed 20)
-            ]
-            [ text "4" ]
-        , button
-            [ class "cpanel-preset-button"
-            , onClick (SetSpeed 30)
-            ]
-            [ text "6" ]
-        , button
-            [ class "cpanel-preset-button"
-            , onClick (SetSpeed 40)
-            ]
-            [ text "8" ]
-        , button
-            [ class "cpanel-preset-button"
-            , onClick (SetSpeed 50)
-            ]
-            [ text "10" ]
-        , button
-            [ class "cpanel-preset-button"
-            , onClick (SetSpeed 60)
-            ]
-            [ text "12" ]
-        ]
+
+        presetButton label speed =
+            button
+                [ class "cpanel-preset-button"
+                , onClick (SetSpeed speed)
+                ]
+                [ text label ]
+    in
+    div []
+        (List.map (\preset -> presetButton preset.label preset.speed) presets)
 
 
 viewCpanelStartStopButtons =
