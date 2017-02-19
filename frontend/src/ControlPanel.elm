@@ -366,79 +366,95 @@ controlPanelView : ControlPanelModel -> Html ControlPanelMsg
 controlPanelView model =
     div
         [ class "cpanel" ]
-        [ div
-            [ class "cpanel-readout" ]
-            [ div
-                [ class "cpanel-readout-speed" ]
-                [ text ((formatSpeed ((toFloat model.speed) * speed_increment)) ++ " km/h") ]
-            , div
-                [ class "cpanel-readout-time" ]
-                [ text (formatTime (model.currentTime - model.startTime)) ]
-            , div
-                [ class "cpanel-readout-distance" ]
-                [ text (formatDistance model.distance) ]
-            ]
+        [ viewCpanelReadout model
         , viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout
-        , div
-            [ class "cpanel-buttons" ]
-            [ button
-                [ class "cpanel-button"
-                , onClick IncreaseSpeed
-                ]
-                [ text "+" ]
-            , button
-                [ class "cpanel-button"
-                , onClick DecreaseSpeed
-                ]
-                [ text "-" ]
-            ]
-        , div
-            []
-            [ button
-                [ class "cpanel-preset-button"
-                , onClick (SetSpeed 10)
-                ]
-                [ text "2" ]
-            , button
-                [ class "cpanel-preset-button"
-                , onClick (SetSpeed 20)
-                ]
-                [ text "4" ]
-            , button
-                [ class "cpanel-preset-button"
-                , onClick (SetSpeed 30)
-                ]
-                [ text "6" ]
-            , button
-                [ class "cpanel-preset-button"
-                , onClick (SetSpeed 40)
-                ]
-                [ text "8" ]
-            , button
-                [ class "cpanel-preset-button"
-                , onClick (SetSpeed 50)
-                ]
-                [ text "10" ]
-            , button
-                [ class "cpanel-preset-button"
-                , onClick (SetSpeed 60)
-                ]
-                [ text "12" ]
-            ]
-        , div
-            []
-            [ button
-                [ class "cpanel-start-button"
-                , onClick Start
-                ]
-                [ text "Start" ]
-            , button
-                [ class "cpanel-stop-button"
-                , onClick Stop
-                ]
-                [ text "Stop" ]
-            ]
+        , viewCpanelSpeedButtons
+        , viewCpanelPresetButtons
+        , viewCpanelStartStopButtons
         , div [] [ text model.error ]
+        ]
+
+
+viewCpanelReadout model =
+    div
+        [ class "cpanel-readout" ]
+        [ div
+            [ class "cpanel-readout-speed" ]
+            [ text ((formatSpeed ((toFloat model.speed) * speed_increment)) ++ " km/h") ]
+        , div
+            [ class "cpanel-readout-time" ]
+            [ text (formatTime (model.currentTime - model.startTime)) ]
+        , div
+            [ class "cpanel-readout-distance" ]
+            [ text (formatDistance model.distance) ]
+        ]
+
+
+viewCpanelSpeedButtons =
+    div
+        [ class "cpanel-buttons" ]
+        [ button
+            [ class "cpanel-button"
+            , onClick IncreaseSpeed
+            ]
+            [ text "+" ]
+        , button
+            [ class "cpanel-button"
+            , onClick DecreaseSpeed
+            ]
+            [ text "-" ]
+        ]
+
+
+viewCpanelPresetButtons =
+    div
+        []
+        [ button
+            [ class "cpanel-preset-button"
+            , onClick (SetSpeed 10)
+            ]
+            [ text "2" ]
+        , button
+            [ class "cpanel-preset-button"
+            , onClick (SetSpeed 20)
+            ]
+            [ text "4" ]
+        , button
+            [ class "cpanel-preset-button"
+            , onClick (SetSpeed 30)
+            ]
+            [ text "6" ]
+        , button
+            [ class "cpanel-preset-button"
+            , onClick (SetSpeed 40)
+            ]
+            [ text "8" ]
+        , button
+            [ class "cpanel-preset-button"
+            , onClick (SetSpeed 50)
+            ]
+            [ text "10" ]
+        , button
+            [ class "cpanel-preset-button"
+            , onClick (SetSpeed 60)
+            ]
+            [ text "12" ]
+        ]
+
+
+viewCpanelStartStopButtons =
+    div
+        []
+        [ button
+            [ class "cpanel-start-button"
+            , onClick Start
+            ]
+            [ text "Start" ]
+        , button
+            [ class "cpanel-stop-button"
+            , onClick Stop
+            ]
+            [ text "Stop" ]
         ]
 
 
