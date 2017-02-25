@@ -17,19 +17,54 @@
 }
 
 .menu-item {
-  
+
 }
 
 /* Control Panel */
 .cpanel {
     width: 100%;
     text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Control Panel flexbox items */
+.cpanel-main {
+    width: 100%;
+}
+
+.cpanel-readouts {
+    flex-direction: row;
+    display: flex;
+    justify-content: space-around;
 }
 
 .cpanel-readout {
     font-size: 24px;
+    flex-direction: column;
 }
 
+.cpanel-workout {
+    width: 100%;
+}
+
+.cpanel-lap {
+    width: 100%;
+}
+
+.cpanel-speed-buttons {
+    width: 100%;
+}
+
+.cpanel-start-stop-buttons {
+    width: 100%;
+}
+
+.cpanel-preset-buttons {
+    width: 100%;
+}
+
+/* Control Panel Buttons */
 .cpanel-button {
     padding: 2em;
     border: blue;
@@ -39,8 +74,7 @@
 }
 
 .cpanel-preset-button {
-    width: 15%;
-    padding: 1em;
+    padding: 2em;
     border: green;
     border-style: groove;
     font-size: 10px;
@@ -50,13 +84,25 @@
 .cpanel-start-button {
     background-color: green;
     color: white;
-    padding: 1em;
+    padding: 3em;
     margin: 1em;
 }
 
 .cpanel-stop-button {
     background-color: red;
     color: white;
-    padding: 1em;
+    padding: 3em;
     margin: 1em;
+}
+
+/* Media Queries */
+
+@media screen and (min-width: 500px) {
+    .cpanel-main {
+      width: 80%;
+    }
+
+    .cpanel-preset-buttons {
+      width: 20%;
+    }
 }

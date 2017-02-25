@@ -366,17 +366,25 @@ controlPanelView : ControlPanelModel -> Html ControlPanelMsg
 controlPanelView model =
     div
         [ class "cpanel" ]
-        [ viewCpanelReadout model
-        , viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout
-        , viewCpanelSpeedButtons
+        [ div
+            [ class "cpanel-main" ]
+            [ div
+                [ class "cpanel-readouts" ]
+                (List.concat
+                    [ viewCpanelReadout model
+                    , viewCpanelLap model
+                    , viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout
+                    ])
+            , viewCpanelSpeedButtons
+            , viewCpanelStartStopButtons
+            , div [] [ text model.error ]
+            ]
         , viewCpanelPresetButtons
-        , viewCpanelStartStopButtons
-        , div [] [ text model.error ]
         ]
 
 
 viewCpanelReadout model =
-    div
+    [ div
         [ class "cpanel-readout" ]
         [ div
             [ class "cpanel-readout-speed" ]
@@ -388,11 +396,22 @@ viewCpanelReadout model =
             [ class "cpanel-readout-distance" ]
             [ text (formatDistance model.distance) ]
         ]
+        ]
+
+
+viewCpanelLap model =
+    -- only display if there is no current workout.
+    case model.workout of
+        Nothing ->
+            [ div [ class "cpanel-readout" ] [ text "Lap", text "0:34"] ]
+
+        Just w ->
+            []
 
 
 viewCpanelSpeedButtons =
     div
-        [ class "cpanel-buttons" ]
+        [ class "cpanel-speed-buttons" ]
         [ button
             [ class "cpanel-button"
             , onClick IncreaseSpeed
@@ -427,13 +446,13 @@ viewCpanelPresetButtons =
                 ]
                 [ text label ]
     in
-    div []
+    div [ class "cpanel-preset-buttons" ]
         (List.map (\preset -> presetButton preset.label preset.speed) presets)
 
 
 viewCpanelStartStopButtons =
     div
-        []
+        [ class "cpanel-start-stop-buttons" ]
         [ button
             [ class "cpanel-start-button"
             , onClick Start
@@ -447,7 +466,7 @@ viewCpanelStartStopButtons =
         ]
 
 
-viewCpanelWorkout : Int -> Time -> Maybe Workout -> Html ControlPanelMsg
+viewCpanelWorkout : Int -> Time -> Maybe Workout -> List (Html ControlPanelMsg)
 viewCpanelWorkout speed currentTime workout =
     let
         remainingSegments =
@@ -465,7 +484,7 @@ viewCpanelWorkout speed currentTime workout =
             case nextSegment of
                 Nothing ->
                     [ div
-                        [ class "cpanel-workout" ]
+                        [ class "cpanel-readout" ]
                         [ if speed > 0 then
                             text "Your workout has no end. Touch stop when you get tired."
                           else
@@ -485,12 +504,13 @@ viewCpanelWorkout speed currentTime workout =
     in
         case workout of
             Nothing ->
-                div [] []
+                []
 
             Just w ->
-                div
-                    [ class "cpanel-workout" ]
-                    ((div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo)
+                [ div
+                      [ class "cpanel-readout" ]
+                      ((div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo)
+                      ]
 
 
 formatInt : Int -> String
