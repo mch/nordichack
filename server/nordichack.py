@@ -1,7 +1,7 @@
 import os
-import zmq
 
 import data
+import treadmill
 
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
@@ -20,29 +20,10 @@ app.config.update(dict(
 ))
 app.config.from_envvar('NORDICHACK_SETTINGS', silent=True)
 
-class FakeSocket:
-    def __init__(self):
-        pass
-
-    def send(self, msg):
-        print "fake socket msg '%s'" % (msg,)
-
-    def recv(self):
-        return "OK"
-
-    def close(self):
-        pass
-
-def get_socket():
-    s = getattr(g, '_socket', None)
-    if s is None:
-        s = g._socket = FakeSocket()
-
-        #c = g._context = zmq.Context()
-        #s = g._socket = c.socket(zmq.REQ)
-        #s.connect("tcp://localhost:5555") # todo use configuration
-
-    return s
+def get_treadmill():
+    if not hasattr(g, 'treadmill'):
+        g.treadmill = treadmill.connect_treadmill(app.config['ZMQ'])
+    return g.treadmill
 
 def get_db():
     if not hasattr(g, 'sqlite_db'):
@@ -56,15 +37,9 @@ def initdb_command():
     print("Initialized the database.")
 
 @app.teardown_appcontext
-def close_socket(exception):
-    s = getattr(g, '_socket', None)
-    if s is not None:
-        s.close()
-
-    c = getattr(g, '_context', None)
-    if c is not None:
-        # ??
-        pass
+def close_treadmill(exception):
+    if hasattr(g, 'treadmill'):
+        g.treadmill.close()
 
 @app.teardown_appcontext
 def close_db(error):
@@ -95,7 +70,9 @@ def desiredspeed():
             response.mimetype = "text/plain"
             return response
 
-        data = set_desired_speed(float(request.data))
+        treadmill = get_treadmill()
+        data = treadmill.set_desired_speed(float(request.data))
+        print "DATA: " + str(data)
     else:
         data = "0.0"
 
@@ -107,26 +84,9 @@ def desiredspeed():
 @app.route('/api/v1/runs', methods=['GET', 'POST'])
 def runs():
     if request.method == 'POST':
-        save_new_run(request.data)
+        #save_new_run(request.data)
+        pass
     else:
         get_runs()
 
-def set_desired_speed(speed):
-
-    # load calibration params from database
-    slope = 3.424
-    offset = 18.558
-    dutycycle = int(speed * slope + offset)
-
-    if speed == 0.0:
-        dutycycle = 0
-
-    # a "service" for handling sending zmq requests?
-    s = get_socket()
-
-    # this blocks indefinitly...
-    s.send(b"SETDUTYCYCLE %d" % dutycycle)
-    msg = s.recv()
-    print("reply: '%s'" % (msg, ))
-    return msg
 
