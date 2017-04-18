@@ -26,9 +26,9 @@ def get_treadmill():
     return g.treadmill
 
 def get_db():
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = data.connect_db(app.config['DATABASE'])
-    return g.sqlite_db
+    if not hasattr(g, 'data'):
+        g.data = data.Data(app.config['DATABASE'])
+    return g.data
 
 @app.cli.command('initdb')
 def initdb_command():
@@ -43,8 +43,8 @@ def close_treadmill(exception):
 
 @app.teardown_appcontext
 def close_db(error):
-    if hasattr(g, 'sqlite_db'):
-        g.sqlite_db.close()
+    if hasattr(g, 'data'):
+        g.data.close()
 
 @app.route('/')
 def hello():
@@ -84,9 +84,12 @@ def desiredspeed():
 @app.route('/api/v1/runs', methods=['GET', 'POST'])
 def runs():
     if request.method == 'POST':
-        #save_new_run(request.data)
-        pass
+        get_db().save_new_run(request.data)
     else:
-        get_runs()
+        get_db().get_runs()
+
+    response = app.make_response(("Not implemented", 500, []))
+    response.mimetype = "text/plain"
+    return response
 
 
