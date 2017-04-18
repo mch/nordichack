@@ -1,12 +1,13 @@
 import os
-import sqlite3
 import zmq
+
+import data
 
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
 
-app = Flask(__name__) 
-app.config.from_object(__name__) 
+app = Flask(__name__)
+app.config.from_object(__name__)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
@@ -18,12 +19,6 @@ app.config.update(dict(
     ZMQ='fake'
 ))
 app.config.from_envvar('NORDICHACK_SETTINGS', silent=True)
-
-def connect_db():
-    """Connects to the specific database."""
-    rv = sqlite3.connect(app.config['DATABASE'])
-    rv.row_factory = sqlite3.Row
-    return rv
 
 class FakeSocket:
     def __init__(self):
@@ -49,6 +44,17 @@ def get_socket():
 
     return s
 
+def get_db():
+    if not hasattr(g, 'sqlite_db'):
+        g.sqlite_db = data.connect_db(app.config['DATABASE'])
+    return g.sqlite_db
+
+@app.cli.command('initdb')
+def initdb_command():
+    """Creates the database tables"""
+    data.init_db(get_db(), app.open_resource('schema.sql', mode='r'))
+    print("Initialized the database.")
+
 @app.teardown_appcontext
 def close_socket(exception):
     s = getattr(g, '_socket', None)
@@ -59,6 +65,11 @@ def close_socket(exception):
     if c is not None:
         # ??
         pass
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, 'sqlite_db'):
+        g.sqlite_db.close()
 
 @app.route('/')
 def hello():
@@ -92,6 +103,13 @@ def desiredspeed():
     response.mimetype = "text/plain"
 
     return response
+
+@app.route('/api/v1/runs', methods=['GET', 'POST'])
+def runs():
+    if request.method == 'POST':
+        save_new_run(request.data)
+    else:
+        get_runs()
 
 def set_desired_speed(speed):
 
