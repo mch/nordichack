@@ -372,7 +372,7 @@ controlPanelView model =
                 [ class "cpanel-readouts" ]
                 (List.concat
                     [ viewCpanelReadout model
-                    , viewCpanelLap model
+                    --, viewCpanelLap model
                     , viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout
                     ])
             , viewCpanelSpeedButtons
@@ -403,7 +403,7 @@ viewCpanelLap model =
     -- only display if there is no current workout.
     case model.workout of
         Nothing ->
-            [ div [ class "cpanel-readout" ] [ text "Lap", text "0:34"] ]
+            [ div [ class "cpanel-readout" ] [ text "Lap ", text "0:34"] ]
 
         Just w ->
             []

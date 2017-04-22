@@ -9,7 +9,7 @@ or [Icon Service](https://www.iconservice.com/CustomerService/parts.do) to
 search for part number 263165 to see if your model might work.
 
 The long term goal is to allow for control of treadmill speed and incline, easy
-contruction of traing programs, and recording fitness data, including heart rate
+construction of training programs, and recording fitness data, including heart rate
 (via a USB ANT+ dongle).
 
 # Interface hardware
@@ -44,12 +44,42 @@ The front end is written in Elm. Unfortunately the Elm compiler is not available
 on the Raspberry Pi, so it is necessary to build the frontend on a Windows, Mac,
 or Linux machine.
 
+A big chunk of this project is about learning Elm and seeing what happens when
+an Elm app gets big, so the frontend is doing way more stuff than it should.
+A lot should be moved to the other components.
+
 # Installing
 
 Install the required dependencies:
 ```
 sudo apt-get install wiringpi libzmq3-dev python-zmq
 sudo pip install wiringpi2
+```
+
+The C++ controller can be built like this:
+```
+cd controller
+make
+```
+
+This produces `controller` and `fakecontroller` programs. The `controller`
+program will use WiringPI to drive the GPIO pins to actually drive the
+treadmill's motor controller. The `fakecontroller` accepts commands over
+zmq but returns fake responses.
+
+The UI can be built on a machine that the Elm toolchain can be installed on.
+It can also be built using make:
+
+```
+cd frontend
+make
+```
+
+This will build a JS file and copy it into a directory where it can be served
+by flask. You can also build a minified version for production:
+
+```
+make prod
 ```
 
 This project currently uses Flask for it's web server. Flask can be set up

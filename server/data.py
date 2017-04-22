@@ -33,7 +33,6 @@ class Data:
         c = self.db.cursor()
         c.execute('INSERT INTO runs(title, date) VALUES(?, ?)', (description, date))
         run_id = c.lastrowid
-        print "Inserted run row with id " + str(run_id)
 
         rows = []
         for item in run_data:
