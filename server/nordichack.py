@@ -4,6 +4,11 @@ from datetime import datetime
 import data
 import treadmill
 
+try:
+    from hrm import Hrm
+except ImportError:
+    from fakehrm import Hrm
+
 import flask
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
@@ -31,6 +36,11 @@ def get_db():
     if not hasattr(g, 'data'):
         g.data = data.Data(app.config['DATABASE'])
     return g.data
+
+def get_hrm():
+    if not hasattr(g, 'hrm'):
+        g.hrm = Hrm()
+    return g.hrm
 
 @app.cli.command('initdb')
 def initdb_command():
@@ -116,4 +126,15 @@ def internal_server_error(message):
 def json_response(data):
     response = app.make_response(flask.json.jsonify(data))
     response.mimetype = "application/json"
+    return response
+
+@app.route('/api/v1/heartrate', methods=['GET'])
+def heartrate():
+    heartrate = get_hrm().get_heartrate()
+
+    if heartrate is None:
+        response = json_response({'heartrate': '--'})
+    else:
+        response = json_response({'heartrate': heartrate})
+
     return response
