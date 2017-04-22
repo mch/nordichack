@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 
 import data
 import treadmill
 
+import flask
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
 
@@ -33,7 +35,8 @@ def get_db():
 @app.cli.command('initdb')
 def initdb_command():
     """Creates the database tables"""
-    data.init_db(get_db(), app.open_resource('schema.sql', mode='r'))
+    d = get_db()
+    d.init_db(app.open_resource('schema.sql', mode='r'))
     print("Initialized the database.")
 
 @app.teardown_appcontext
@@ -83,13 +86,34 @@ def desiredspeed():
 
 @app.route('/api/v1/runs', methods=['GET', 'POST'])
 def runs():
-    if request.method == 'POST':
-        get_db().save_new_run(request.data)
-    else:
-        get_db().get_runs()
+    response = None
 
-    response = app.make_response(("Not implemented", 500, []))
-    response.mimetype = "text/plain"
+    if request.method == 'POST':
+        # [{time: int, speed: int}]
+        d = flask.json.loads(request.data)
+        # TODO The time should be the time the run starts, not when it ends
+        try:
+            result = get_db().save_new_run("Untitled Run", str(datetime.now()), d)
+            response = json_response(result)
+        except:
+            response = internal_server_error("Unable to save run")
+
+    else:
+        try:
+            response = json_response(get_db().get_runs())
+
+        except:
+            response = internal_server_error("Unable to retrieve runs")
+
     return response
 
+def internal_server_error(message):
+    data = flask.json.jsonify({"message": message})
+    response = app.make_response((data, 500, []))
+    response.mimetype = "application/json"
+    return response
 
+def json_response(data):
+    response = app.make_response(flask.json.jsonify(data))
+    response.mimetype = "application/json"
+    return response
