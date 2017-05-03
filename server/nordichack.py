@@ -13,7 +13,10 @@ import flask
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
 
+from flask_sockets import Sockets
+
 app = Flask(__name__)
+sockets = Sockets(app)
 app.config.from_object(__name__)
 
 # Load default config and override config from an environment variable
@@ -138,3 +141,10 @@ def heartrate():
         response = json_response({'heartrate': heartrate})
 
     return response
+
+@sockets.route('/echo')
+def echo_socket(ws):
+    while True:
+        message = ws.receive()
+        ws.send(message)
+

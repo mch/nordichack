@@ -91,6 +91,8 @@ virtualenv venv
 . venv/bin/activate
 pip install flask
 pip install pyzmq
+pip install gevent
+pip install Flask-Sockets
 export FLASK_APP=nordichack.py
 export FLASK_DEBUG=1
 deactivate
