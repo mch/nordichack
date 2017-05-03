@@ -12,6 +12,14 @@ DEBUG = True
 
 class Hrm(object):
     def __init__(self):
+        self.device = None
+        self.antnode = None
+        self.heartrate = None
+        self.states = {STATE_SEARCHING: 'searching'
+                       , STATE_SEARCH_TIMEOUT: 'search timeout'
+                       , STATE_CLOSED: 'closed'
+                       , STATE_RUNNING: 'running'}
+
         self.start_node()
         self.open_channel()
 
@@ -33,10 +41,14 @@ class Hrm(object):
             print("Error opening channel")
 
     def get_heartrate(self):
-        if self.heartrate.state == STATE_RUNNING:
+        if self.heartrate and self.heartrate.state == STATE_RUNNING:
             return self.heartrate.computed_heart_rate
+        return '--'
 
-        return None
+    def get_state(self):
+        if self.heartrate:
+            return self.states[self.heartrate.state]
+        return '--'
 
     def close(self):
         self.antnode.stop()

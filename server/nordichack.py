@@ -141,14 +141,8 @@ def json_response(data):
 @app.route('/api/v1/heartrate', methods=['GET'])
 def heartrate():
     hrm = get_hrm()
-    heartrate = hrm.get_heartrate()
-
-    if heartrate is None:
-        response = json_response({'heartrate': '--', 'state': hrm.heartrate.state})
-    else:
-        response = json_response({'heartrate': heartrate})
-
-    return response
+    return json_response({'heartrate': hrm.get_heartrate(),
+                          'state': hrm.get_state()})
 
 @sockets.route('/echo')
 def echo_socket(ws):
