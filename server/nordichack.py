@@ -40,10 +40,17 @@ def get_db():
         g.data = data.Data(app.config['DATABASE'])
     return g.data
 
+# TODO make HRM start up immediately and asynchronously
+# Start Hrm immedietly, because it takes some time to start while it
+# gets the capabilities of the Ant+ device. If the ANT device can't get
+# capabilities, this is likely to hang.
+hrm = None
 def get_hrm():
-    if not hasattr(g, 'hrm'):
-        g.hrm = Hrm()
-    return g.hrm
+    global hrm
+    if hrm is None:
+        print "creating hrm"
+        hrm = Hrm()
+    return hrm
 
 @app.cli.command('initdb')
 def initdb_command():
@@ -133,10 +140,11 @@ def json_response(data):
 
 @app.route('/api/v1/heartrate', methods=['GET'])
 def heartrate():
-    heartrate = get_hrm().get_heartrate()
+    hrm = get_hrm()
+    heartrate = hrm.get_heartrate()
 
     if heartrate is None:
-        response = json_response({'heartrate': '--'})
+        response = json_response({'heartrate': '--', 'state': hrm.heartrate.state})
     else:
         response = json_response({'heartrate': heartrate})
 

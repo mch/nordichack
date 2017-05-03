@@ -1,59 +1,42 @@
-"""
-Based on
-https://github.com/baderj/python-ant/blob/develop/demos/ant.core/04-processevents.py
-"""
+# -*- coding: utf-8 -*-
 
 import sys
 import time
 
-from ant.core import driver
-from ant.core import node
-from ant.core import event
-from ant.core import message
-from ant.core.constants import *
+from ant.core import driver, node, log
+from ant.core.exceptions import DriverError
+from ant.plus.heartrate import *
 
-from config import *
+LOG = log.LogWriter()
+DEBUG = True
 
-NETKEY = '\xB9\xA5\x21\xFB\xBD\x72\xC3\x45'
-
-class Listener(event.EventCallback):
-
-    def __init__(self, callback):
-        self.callback = callback
-
-    def process(self, msg):
-        if isinstance(msg, message.ChannelBroadcastDataMessage):
-            self.callback(ord(msg.payload[-1]))
-
-class Hrm:
-
+class Hrm(object):
     def __init__(self):
-        self.stick = driver.USB2Driver(SERIAL, log=LOG, debug=DEBUG)
-        self.node = node.Node(stick)
-        self.node.start()
+        self.start_node()
+        self.open_channel()
 
-        self.key = node.NetworkKey('N:ANT+', NETKEY)
-        self.node.setNetworkKey(0, key)
-        self.channel = self.node.getFreeChannel()
-        self.channel.name = 'C:HRM'
-        self.channel.assign('N:ANT+', CHANNEL_TYPE_TWOWAY_RECEIVE)
-        self.channel.setID(120, 0, 0)
-        self.channel.setSearchTimeout(TIMEOUT_NEVER)
-        self.channel.setPeriod(8070)
-        self.channel.setFrequency(57)
-        self.channel.open()
+    def start_node(self):
+        try:
+            # TODO configuration of USB device
+            self.device = driver.USB2Driver(log=LOG, debug=DEBUG)
+            self.antnode = node.Node(self.device)
 
-        self.heartrate = None
+            self.antnode.start()
+        except DriverError as e:
+            print("Driver error")
 
-        def callback(rate):
-            self.heartrate = rate
+    def open_channel(self):
+        try:
+            # TODO configuration of paired device
+            self.heartrate = HeartRate(self.antnode)
+        except Exception as e:
+            print("Error opening channel")
 
-        self.channel.registerCallback(Listener(callback))
+    def get_heartrate(self):
+        if self.heartrate.state == STATE_RUNNING:
+            return self.heartrate.computed_heart_rate
+
+        return None
 
     def close(self):
-        self.channel.close()
-        self.channel.unassign()
-        self.node.stop()
-
-    def get_heartrate():
-        return self.heartrate
+        self.antnode.stop()
