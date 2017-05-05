@@ -3,6 +3,7 @@ module Main exposing (..)
 import Common exposing (..)
 import Workout exposing (..)
 import ControlPanel exposing (..)
+import Ant exposing (Model, init, view, update)
 
 import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
@@ -25,11 +26,13 @@ type Msg
     | ChangeScreen Screen
     | StartWorkout (Maybe Workout)
     | EditWorkout WorkoutId
+    | AntMsg Ant.Action
 
 
 type alias Model =
     { controlPanel : ControlPanelModel
     , workoutList : WorkoutListModel
+    , antModel : Ant.Model
     , currentScreen : Screen
     }
 
@@ -48,12 +51,16 @@ init =
 
         ( wlm, wlc ) =
             workoutListInit
+
+        ( antModel, antCmd ) =
+            Ant.init
     in
         { controlPanel = cpm
         , workoutList = wlm
         , currentScreen = MainMenuScreen
+        , antModel = antModel
         }
-            ! [ Cmd.map ControlPanelMsg cpc, wlc ]
+            ! [ Cmd.map ControlPanelMsg cpc, wlc, Cmd.map AntMsg antCmd ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -98,6 +105,12 @@ update msg model =
         EditWorkout workoutId ->
             ( model, Cmd.none )
 
+        AntMsg msg ->
+            let
+                (newModel, newCmd) = Ant.update msg model.antModel
+            in
+                ({model | antModel = newModel}, Cmd.map AntMsg newCmd)
+
 
 view : Model -> Html Msg
 view model =
@@ -130,6 +143,9 @@ view model =
 
                 MainMenuScreen ->
                     viewMainMenu
+
+                AntScreen ->
+                    Html.map AntMsg (Ant.view model.antModel)
     in
         div [ class "main" ] (List.append navbar [ content ])
 
@@ -143,6 +159,7 @@ viewMainMenu =
         , div [ class "menu-item" ] [ text "Training Schedule" ]
         , div [ class "menu-item" ] [ text "Settings" ]
         , div [ class "menu-item" ] [ text "Users" ]
+        , div [ class "menu-item", onClick (ChangeScreen AntScreen) ] [ text "ANT+ Devices" ]
         ]
 
 

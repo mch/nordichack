@@ -6,6 +6,7 @@ type Screen
     = MainMenuScreen
     | ControlPanelScreen
     | WorkoutListScreen
+    | AntScreen
 
 
 type CommonMsg
