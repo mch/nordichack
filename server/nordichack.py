@@ -1,5 +1,9 @@
 import os
+import time
 from datetime import datetime
+
+from gevent.queue import Queue, Empty
+from geventwebsocket.exceptions import WebSocketError
 
 import data
 import treadmill
@@ -40,10 +44,9 @@ def get_db():
         g.data = data.Data(app.config['DATABASE'])
     return g.data
 
-# TODO make HRM start up immediately and asynchronously
-# Start Hrm immedietly, because it takes some time to start while it
-# gets the capabilities of the Ant+ device. If the ANT device can't get
-# capabilities, this is likely to hang.
+# Life cycle of hrm is awkward. If it was strictly web socket, the lifetime of
+# websocket would be fine probably. But if a restful interface is desired, then
+# the channel should be open for the length of the run. 
 hrm = None
 def get_hrm():
     global hrm
@@ -144,9 +147,32 @@ def heartrate():
     return json_response({'heartrate': hrm.get_heartrate(),
                           'state': hrm.get_state()})
 
+@sockets.route('/heartrate')
+def heartrate_socket(ws):
+    hrm = get_hrm()
+    q = hrm.get_queue()
+    while not ws.closed:
+        try:
+            hr = q.get(timeout=5)
+            msg = flask.json.dumps({'heartrate': hr})
+            ws.send(msg)
+        except Empty:
+            print "timeout, no message"
+        except WebSocketError as e:
+            print "websocket error: " + str(e)
+            break;
+
+    if not ws.closed:
+        ws.close()
+        
+    print "Web socket closed"
+
 @sockets.route('/echo')
 def echo_socket(ws):
     while True:
         message = ws.receive()
         ws.send(message)
 
+def shutdown():
+    hrm = get_hrm()
+    hrm.close()

@@ -3,12 +3,26 @@
 import sys
 import time
 
+from gevent.queue import Queue
+
 from ant.core import driver, node, log
 from ant.core.exceptions import DriverError
 from ant.plus.heartrate import *
 
-LOG = log.LogWriter()
-DEBUG = True
+LOG = None #log.LogWriter()
+DEBUG = False
+
+class HrmCallback(HeartRateCallback):
+
+    def __init__(self, queue):
+        self.queue = queue
+
+    def device_found(self, device_number, transmission_type):
+        pass
+
+    def heartrate_data(self, computed_heartrate): # rest to come soon
+        self.queue.put_nowait(computed_heartrate)
+
 
 class Hrm(object):
     def __init__(self):
@@ -19,6 +33,9 @@ class Hrm(object):
                        , STATE_SEARCH_TIMEOUT: 'search timeout'
                        , STATE_CLOSED: 'closed'
                        , STATE_RUNNING: 'running'}
+
+        self._queue = Queue()
+        self._callback = HrmCallback(self._queue)
 
         self.start_node()
         self.open_channel()
@@ -36,7 +53,7 @@ class Hrm(object):
     def open_channel(self):
         try:
             # TODO configuration of paired device
-            self.heartrate = HeartRate(self.antnode)
+            self.heartrate = HeartRate(self.antnode, callback = self._callback)
         except Exception as e:
             print("Error opening channel")
 
@@ -49,6 +66,10 @@ class Hrm(object):
         if self.heartrate:
             return self.states[self.heartrate.state]
         return '--'
+
+    def get_queue(self):
+        """Returns the gevent queue events are written to."""
+        return self._queue
 
     def close(self):
         self.antnode.stop()
