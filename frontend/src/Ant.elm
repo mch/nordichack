@@ -5,6 +5,8 @@ import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
 import WebSocket exposing (listen)
+import FontAwesome
+import Color
 
 type alias Model =
     { heartrate : String }
@@ -32,4 +34,7 @@ update action model =
 view : Model -> Html Action
 view model =
     div [] [ text "ANT+ Devices..."
-           , text ("Current heart rate: " ++ model.heartrate) ]
+           , div [] [ FontAwesome.heartbeat Color.red 20
+                    , text ("Current heart rate: " ++ model.heartrate)
+                    ]
+           ]
