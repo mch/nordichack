@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
 import os
 import time
 from datetime import datetime
 
+from gevent import Greenlet, joinall
 from gevent.queue import Queue, Empty
 from geventwebsocket.exceptions import WebSocketError
 
 import data
 import treadmill
 
-from hrm import Hrm
+from antdevices import AntDevices
 
 import flask
 from flask import Flask, request, session, g, redirect, url_for, abort, \
@@ -41,16 +43,19 @@ def get_db():
         g.data = data.Data(app.config['DATABASE'])
     return g.data
 
-# Life cycle of hrm is awkward. If it was strictly web socket, the lifetime of
-# websocket would be fine probably. But if a restful interface is desired, then
-# the channel should be open for the length of the run. 
-hrm = None
-def get_hrm():
-    global hrm
-    if hrm is None:
-        print "creating hrm"
-        hrm = Hrm()
-    return hrm
+ant_devices = None
+def get_ant_devices():
+    global ant_devices
+    if ant_devices is None:
+        print "creating ant devices"
+        ant_devices = AntDevices()
+        try:
+            ant_devices.start()
+        except:
+            print("Unable to start ant node. Ensure USB key is connected are restart server.")
+            pass
+
+    return ant_devices
 
 @app.cli.command('initdb')
 def initdb_command():
@@ -140,30 +145,45 @@ def json_response(data):
 
 @app.route('/api/v1/heartrate', methods=['GET'])
 def heartrate():
-    hrm = get_hrm()
-    return json_response({'heartrate': hrm.get_heartrate(),
-                          'state': hrm.get_state()})
+    ant_devices = get_ant_devices()
+    hrm_device = ant_devices.open_heartrate_device(0, 0)
+    if hrm_device:
+        hrm = hrm_device['object']
+        return json_response({'heartrate': hrm.computed_heartrate()})
+
+    return json_response({'heartrate': '--'})
 
 @sockets.route('/heartrate')
 def heartrate_socket(ws):
-    hrm = get_hrm()
-    q = hrm.get_queue()
+    ant_devices = get_ant_devices()
+    hrm_device = ant_devices.open_heartrate_device(0, 0)
+    if not hrm_device:
+        return
+
+    def watch_for_socket_close():
+        while not ws.closed:
+            # reading seems to be necessary to detect socket close in
+            # a timely fashion
+            data = ws.receive()
+
+    read_greenlet = Greenlet.spawn(watch_for_socket_close)
+
+    q = hrm_device['queue']
+
     while not ws.closed:
         try:
-            hr = q.get(timeout=5)
+            hr = q.get(timeout=0.2) # why is a timeout necessary?
             msg = flask.json.dumps({'heartrate': hr})
             ws.send(msg)
         except Empty:
-            print "timeout, no message"
+            pass
         except WebSocketError as e:
             print "websocket error: " + str(e)
             break;
 
-    if not ws.closed:
-        ws.close()
+    read_greenlet.join()
 
-    print "Web socket closed"
 
 def shutdown():
-    hrm = get_hrm()
-    hrm.close()
+    ant_devices = get_ant_devices()
+    ant_devices.stop()
