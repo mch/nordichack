@@ -39,8 +39,13 @@ type alias Model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    controlPanelSubscriptions model.controlPanel
-        |> Sub.map ControlPanelMsg
+    let
+        cpanelSubs = controlPanelSubscriptions model.controlPanel |> Sub.map ControlPanelMsg
+        antSubs = Ant.subscriptions model.antModel |> Sub.map AntMsg
+    in
+    Sub.batch [ cpanelSubs
+              , if model.currentScreen == AntScreen then antSubs else Sub.none
+              ]
 
 
 init : ( Model, Cmd Msg )
