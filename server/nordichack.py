@@ -8,10 +8,7 @@ from geventwebsocket.exceptions import WebSocketError
 import data
 import treadmill
 
-try:
-    from hrm import Hrm
-except ImportError:
-    from fakehrm import Hrm
+from hrm import Hrm
 
 import flask
 from flask import Flask, request, session, g, redirect, url_for, abort, \
@@ -164,14 +161,8 @@ def heartrate_socket(ws):
 
     if not ws.closed:
         ws.close()
-        
-    print "Web socket closed"
 
-@sockets.route('/echo')
-def echo_socket(ws):
-    while True:
-        message = ws.receive()
-        ws.send(message)
+    print "Web socket closed"
 
 def shutdown():
     hrm = get_hrm()
