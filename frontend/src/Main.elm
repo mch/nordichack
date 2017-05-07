@@ -44,7 +44,7 @@ subscriptions model =
         antSubs = Ant.subscriptions model.antModel |> Sub.map AntMsg
     in
     Sub.batch [ cpanelSubs
-              , if model.currentScreen == AntScreen then antSubs else Sub.none
+              , antSubs -- if model.currentScreen == AntScreen then antSubs else Sub.none
               ]
 
 
