@@ -366,25 +366,17 @@ controlPanelView : ControlPanelModel -> Html ControlPanelMsg
 controlPanelView model =
     div
         [ class "cpanel" ]
-        [ div
-            [ class "cpanel-main" ]
-            [ div
-                [ class "cpanel-readouts" ]
-                (List.concat
-                    [ viewCpanelReadout model
-                    --, viewCpanelLap model
-                    , viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout
-                    ])
-            , viewCpanelSpeedButtons
-            , viewCpanelStartStopButtons
-            , div [] [ text model.error ]
-            ]
+        (List.append (viewCpanelReadout model ::
+        (viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout))
+        [ viewCpanelSpeedButtons
         , viewCpanelPresetButtons
-        ]
+        , viewCpanelStartStopButtons
+        , div [] [ text model.error ]
+        ])
 
 
 viewCpanelReadout model =
-    [ div
+    div
         [ class "cpanel-readout" ]
         [ div
             [ class "cpanel-readout-speed" ]
@@ -395,7 +387,6 @@ viewCpanelReadout model =
         , div
             [ class "cpanel-readout-distance" ]
             [ text (formatDistance model.distance) ]
-        ]
         ]
 
 
