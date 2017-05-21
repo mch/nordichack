@@ -50,8 +50,8 @@ class FakeSocket(TreadmillSocket):
 class ZmqSocket(TreadmillSocket):
     def __init__(self, path):
         self.context = zmq.Context()
-        self.socket = c.socket(zmq.REQ)
-        s.connect(path)
+        self.socket = self.context.socket(zmq.REQ)
+        self.socket.connect(path)
 
     def send(self, msg):
         self.socket.send(msg)
