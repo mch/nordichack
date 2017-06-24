@@ -51,7 +51,7 @@ class Data:
             data = map(to_dict, data)
 
         except Exception as e:
-            print e
+            print(e)
         return data
 
 

@@ -47,7 +47,7 @@ ant_devices = None
 def get_ant_devices():
     global ant_devices
     if ant_devices is None:
-        print "creating ant devices"
+        print("creating ant devices")
         ant_devices = AntDevices()
         try:
             ant_devices.start()
@@ -100,7 +100,7 @@ def desiredspeed():
 
         treadmill = get_treadmill()
         data = treadmill.set_desired_speed(float(request.data))
-        print "DATA: " + str(data)
+        print("DATA: " + str(data))
     else:
         data = "0.0"
 
@@ -183,7 +183,7 @@ def heartrate_socket(ws):
         except Empty:
             pass
         except WebSocketError as e:
-            print "websocket error: " + str(e)
+            print("websocket error: " + str(e))
             break;
 
     read_greenlet.join()

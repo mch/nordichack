@@ -39,7 +39,7 @@ class FakeSocket(TreadmillSocket):
         pass
 
     def send(self, msg):
-        print "fake socket msg '%s'" % (msg,)
+        print("fake socket msg '%s'" % (msg,))
 
     def recv(self):
         return "OK"
