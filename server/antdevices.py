@@ -49,6 +49,7 @@ class AntDevices(object):
             self.node = node.Node(self.usb_device)
             self.node.start()
         except:
+            self.node = None
             print("Unable to start node.")
 
 
@@ -68,12 +69,16 @@ class AntDevices(object):
         if key in self.devices:
             return self.devices[key]
 
-        # TODO make this a class
-        device = {}
-        device['queue'] = Queue(maxsize=1)
-        device['callback'] = HrmCallback(device['queue'])
-        device['object'] = HeartRate(self.node, callback = device['callback'])
+        try:
+            # TODO make this a class
+            device = {}
+            device['queue'] = Queue(maxsize=1)
+            device['callback'] = HrmCallback(device['queue'])
+            device['object'] = HeartRate(self.node, callback = device['callback'])
 
-        self.devices[key] = device
+            self.devices[key] = device
+        except:
+            print("Unable to open heart rate device.")
+            device = None
 
         return device
