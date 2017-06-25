@@ -128,12 +128,22 @@ update msg model =
                 ( newModel, newCmd, heartdata ) =
                     Ant.update msg model.antModel
 
-                dataModel = model.dataModel
+                nextRRInterval = Maybe.map2 (,) heartdata.eventTime heartdata.rrInterval
+                    |> Maybe.map List.singleton
+                    |> Maybe.withDefault []
 
-                newDataModel = { dataModel | heartdata = heartdata }
+                dataModel =
+                    model.dataModel
+
+                newDataModel =
+                    { dataModel
+                        | heartdata = heartdata
+                        , rrIntervalTimeSeries = List.append dataModel.rrIntervalTimeSeries nextRRInterval
+                    }
             in
                 ( { model | antModel = newModel, dataModel = newDataModel }
-                , Cmd.map AntMsg newCmd )
+                , Cmd.map AntMsg newCmd
+                )
 
 
 view : Model -> Html Msg

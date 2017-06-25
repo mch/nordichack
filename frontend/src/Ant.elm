@@ -4,7 +4,7 @@ import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
-import Json.Decode exposing (decodeString, maybe, int, field)
+import Json.Decode exposing (decodeString, maybe, int, field, map3)
 import WebSocket exposing (listen)
 import FontAwesome
 import Color
@@ -41,11 +41,16 @@ update action model =
 decodeHeartData : String -> HeartData
 decodeHeartData json =
     let
-        heartrate =
-            decodeString (maybe (field "heartrate" int)) json
-                |> Result.withDefault Nothing
+        decoder = map3 HeartData
+            (maybe (field "heartrate_bpm" int))
+            (maybe (field "rr_interval_ms" int))
+            (maybe (field "event_time_ms" int))
+
+        heartdata =
+            decodeString decoder json
+                |> Result.withDefault { heartrate = Nothing, rrInterval = Nothing, eventTime = Nothing }
     in
-        { heartrate = heartrate, rrInterval = Nothing, eventTime = Nothing }
+        heartdata
 
 
 view : Model -> Html Action

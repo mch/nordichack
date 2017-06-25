@@ -13,13 +13,14 @@ TODO:
 
 type alias DataModel =
     { heartdata : HeartData
+    , rrIntervalTimeSeries : List ( Int, Int )
     }
 
 
 type alias HeartData =
     { heartrate : Maybe Int
     , rrInterval : Maybe Int
-    , eventTime : Maybe Float
+    , eventTime : Maybe Int
     }
 
 
@@ -30,4 +31,5 @@ initDataModel =
         , rrInterval = Maybe.Nothing
         , eventTime = Maybe.Nothing
         }
+    , rrIntervalTimeSeries = []
     }

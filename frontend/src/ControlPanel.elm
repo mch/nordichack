@@ -399,6 +399,11 @@ viewCpanelReadout model data =
             , text (Maybe.withDefault 0 data.heartdata.heartrate |> toString)
             , text " bpm"
             ]
+        , div
+            [ class "cpanel-readout-wide-item" ]
+            [ FontAwesome.heartbeat Color.red 20
+            , text (Maybe.withDefault 0 data.heartdata.rrInterval |> toString)
+            , text " ms"]
         ]
 
 
