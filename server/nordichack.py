@@ -190,5 +190,7 @@ def heartrate_socket(ws):
 
 
 def shutdown():
-    ant_devices = get_ant_devices()
-    ant_devices.stop()
+    global ant_devices
+    if ant_devices:
+        print("stopping ant devices.")
+        ant_devices.stop()
