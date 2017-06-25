@@ -9,20 +9,21 @@ import FontAwesome
 import Color
 
 type alias Model =
-    { heartrate : String }
+    { heartrate : String
+    , hostname : String }
 
 type Action
     = Todo
     | Heartrate String
 
-init : (Model, Cmd Action)
-init =
-    ({ heartrate = "NA" }, Cmd.none)
+init : String -> (Model, Cmd Action)
+init hostname =
+    ({ heartrate = "NA", hostname = hostname }, Cmd.none)
 
 
 subscriptions : Model -> Sub Action
 subscriptions model =
-    listen "ws://localhost:5000/heartrate" Heartrate
+    listen ("ws://" ++ model.hostname ++ ":5000/heartrate") Heartrate
 
 update : Action -> Model -> (Model, Cmd Action)
 update action model =

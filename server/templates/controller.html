@@ -15,8 +15,8 @@
     <script src="/static/controller.js"></script>
     <script>
       var node = document.getElementById('main');
-      var app = Elm.Main.embed(node);
+      var app = Elm.Main.embed(node, { hostname: window.location.hostname });
     </script>
 </body>
-  
+
 </html>

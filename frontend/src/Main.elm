@@ -13,7 +13,7 @@ import Time exposing (Time)
 
 
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
         , update = update
@@ -36,6 +36,10 @@ type alias Model =
     , currentScreen : Screen
     }
 
+type alias Flags =
+    { hostname : String
+    }
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -48,8 +52,8 @@ subscriptions model =
               ]
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     let
         ( cpm, cpc ) =
             controlPanelInit
@@ -58,7 +62,7 @@ init =
             workoutListInit
 
         ( antModel, antCmd ) =
-            Ant.init
+            Ant.init flags.hostname
     in
         { controlPanel = cpm
         , workoutList = wlm
