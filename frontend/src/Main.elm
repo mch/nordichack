@@ -205,7 +205,7 @@ workoutListInit =
                     ]
               }
             , { title = "Very Short"
-              , workoutId = 1
+              , workoutId = 2
               , description = Just "Test"
               , segments =
                     [ { startTime = 0, speed = 4 }
@@ -213,12 +213,40 @@ workoutListInit =
                     , { startTime = Time.second * 10, speed = 0 }
                     ]
               }
-            , { title = "Unending"
-              , workoutId = 1
-              , description = Just "Test"
+            , { title = "Week 1 - Easy Run"
+              , workoutId = 3
+              , description = Just "Build your endurance for the race"
               , segments =
-                    [ { startTime = 0, speed = 4 }
-                    , { startTime = Time.second * 5, speed = 8 }
+                    [ { startTime = 0, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 30, speed = 0 }
+                    ]
+              }
+            , { title = "Week 1 - Fartlek Run"
+              , workoutId = 4
+              , description = Just "Build your endurance for the race"
+              , segments =
+                    [ { startTime = 0, speed = paceToSpeed 7.0  }
+                    , { startTime = Time.minute * 10, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 11, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 12, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 13, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 14, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 15, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 16, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 17, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 18, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 19, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 20, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 21, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 22, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 23, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 24, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 25, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 26, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 27, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 28, speed = paceToSpeed 5.0 }
+                    , { startTime = Time.minute * 29, speed = paceToSpeed 7.0 }
+                    , { startTime = Time.minute * 40, speed = 0.0 }
                     ]
               }
             ]
@@ -226,6 +254,10 @@ workoutListInit =
     , Cmd.none
     )
 
+{-| Coverts pace in min/km to speed in km/hr -}
+paceToSpeed : Float -> Float
+paceToSpeed pace =
+  1.0 / pace * 60.0
 
 workoutListUpdate : Msg -> WorkoutListModel -> ( WorkoutListModel, Cmd Msg )
 workoutListUpdate msg model =
