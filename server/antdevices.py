@@ -15,7 +15,7 @@ import time
 from gevent.queue import Queue, Full
 
 from ant.core import driver, node, log
-from ant.core.exceptions import DriverError
+from ant.core.exceptions import DriverError, NodeError, ChannelError
 from ant.plus.heartrate import *
 
 class HrmCallback(HeartRateCallback):
@@ -55,10 +55,17 @@ class AntDevices(object):
             self.node = node.Node(self.usb_device)
             print("Starting node {0}".format(self.node))
             self.node.start()
-            print("node started.")
-        except Exception as e:
+            print("Node started.")
+        except NodeError as e:
             self.node = None
             print("Unable to start node: {0}".format(e))
+        except ChannelError as e:
+            self.node = None
+            print("Unable to open channel: {0}".format(e))
+        except Exception as e:
+            self.node = None
+            print("Unexpected exception...: {0}".format(e))
+
 
 
     def stop(self):
