@@ -1,5 +1,7 @@
 module ControlPanel exposing (..)
 
+import Color
+import FontAwesome
 import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -8,6 +10,7 @@ import Json.Encode
 import Time exposing (Time)
 import Workout exposing (..)
 import PrintF exposing (..)
+import Model exposing (DataModel, HeartData)
 
 
 speed_increment : Float
@@ -362,20 +365,23 @@ postLog log =
         Http.send (\r -> SaveLogResponse r) req
 
 
-controlPanelView : ControlPanelModel -> Html ControlPanelMsg
-controlPanelView model =
+controlPanelView : ControlPanelModel -> DataModel -> Html ControlPanelMsg
+controlPanelView model dataModel =
     div
         [ class "cpanel" ]
-        (List.append (viewCpanelReadout model ::
-        (viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout))
-        [ viewCpanelSpeedButtons
-        , viewCpanelPresetButtons
-        , viewCpanelStartStopButtons
-        , div [] [ text model.error ]
-        ])
+        (List.append
+            (viewCpanelReadout model dataModel
+                :: (viewCpanelWorkout model.requestedSpeed (model.currentTime - model.startTime) model.workout)
+            )
+            [ viewCpanelSpeedButtons
+            , viewCpanelPresetButtons
+            , viewCpanelStartStopButtons
+            , div [] [ text model.error ]
+            ]
+        )
 
 
-viewCpanelReadout model =
+viewCpanelReadout model data =
     div
         [ class "cpanel-readout" ]
         [ div
@@ -387,6 +393,12 @@ viewCpanelReadout model =
         , div
             [ class "cpanel-readout-distance" ]
             [ text (formatDistance model.distance) ]
+        , div
+            [ class "cpanel-readout-item" ]
+            [ FontAwesome.heartbeat Color.red 20
+            , text (Maybe.withDefault 0 data.heartdata.heartrate |> toString)
+            , text " bpm"
+            ]
         ]
 
 
@@ -394,7 +406,7 @@ viewCpanelLap model =
     -- only display if there is no current workout.
     case model.workout of
         Nothing ->
-            [ div [ class "cpanel-readout" ] [ text "Lap ", text "0:34"] ]
+            [ div [ class "cpanel-readout" ] [ text "Lap ", text "0:34" ] ]
 
         Just w ->
             []
@@ -416,7 +428,8 @@ viewCpanelSpeedButtons =
         ]
 
 
-type alias SpeedPreset = { label: String, speed: Int }
+type alias SpeedPreset =
+    { label : String, speed : Int }
 
 
 viewCpanelPresetButtons =
@@ -437,8 +450,8 @@ viewCpanelPresetButtons =
                 ]
                 [ text label ]
     in
-    div [ class "cpanel-preset-buttons" ]
-        (List.map (\preset -> presetButton preset.label preset.speed) presets)
+        div [ class "cpanel-preset-buttons" ]
+            (List.map (\preset -> presetButton preset.label preset.speed) presets)
 
 
 viewCpanelStartStopButtons =
@@ -499,9 +512,9 @@ viewCpanelWorkout speed currentTime workout =
 
             Just w ->
                 [ div
-                      [ class "cpanel-readout" ]
-                      ((div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo)
-                      ]
+                    [ class "cpanel-readout" ]
+                    ((div [ class "cpanel-workout" ] [ (text w.title) ]) :: nextSegmentInfo)
+                ]
 
 
 formatInt : Int -> String

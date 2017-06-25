@@ -1,10 +1,10 @@
 module Main exposing (..)
 
-import Common exposing (..)
-import Workout exposing (..)
-import ControlPanel exposing (..)
 import Ant exposing (Model, init, view, update)
-
+import Common exposing (..)
+import ControlPanel exposing (..)
+import Model exposing (DataModel, initDataModel)
+import Workout exposing (..)
 import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -34,7 +34,9 @@ type alias Model =
     , workoutList : WorkoutListModel
     , antModel : Ant.Model
     , currentScreen : Screen
+    , dataModel : DataModel
     }
+
 
 type alias Flags =
     { hostname : String
@@ -44,12 +46,17 @@ type alias Flags =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
-        cpanelSubs = controlPanelSubscriptions model.controlPanel |> Sub.map ControlPanelMsg
-        antSubs = Ant.subscriptions model.antModel |> Sub.map AntMsg
+        cpanelSubs =
+            controlPanelSubscriptions model.controlPanel |> Sub.map ControlPanelMsg
+
+        antSubs =
+            Ant.subscriptions model.antModel |> Sub.map AntMsg
     in
-    Sub.batch [ cpanelSubs
-              , antSubs -- if model.currentScreen == AntScreen then antSubs else Sub.none
-              ]
+        Sub.batch
+            [ cpanelSubs
+            , antSubs
+              -- if model.currentScreen == AntScreen then antSubs else Sub.none
+            ]
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -68,6 +75,7 @@ init flags =
         , workoutList = wlm
         , currentScreen = MainMenuScreen
         , antModel = antModel
+        , dataModel = initDataModel
         }
             ! [ Cmd.map ControlPanelMsg cpc, wlc, Cmd.map AntMsg antCmd ]
 
@@ -94,7 +102,8 @@ update msg model =
                 cpModel =
                     model.controlPanel
 
-                (freshCpModel, _) = controlPanelInit
+                ( freshCpModel, _ ) =
+                    controlPanelInit
             in
                 if model.controlPanel.speed == 0 && model.controlPanel.requestedSpeed == 0 then
                     ( { model
@@ -116,9 +125,15 @@ update msg model =
 
         AntMsg msg ->
             let
-                (newModel, newCmd) = Ant.update msg model.antModel
+                ( newModel, newCmd, heartdata ) =
+                    Ant.update msg model.antModel
+
+                dataModel = model.dataModel
+
+                newDataModel = { dataModel | heartdata = heartdata }
             in
-                ({model | antModel = newModel}, Cmd.map AntMsg newCmd)
+                ( { model | antModel = newModel, dataModel = newDataModel }
+                , Cmd.map AntMsg newCmd )
 
 
 view : Model -> Html Msg
@@ -145,7 +160,7 @@ view model =
         content =
             case model.currentScreen of
                 ControlPanelScreen ->
-                    Html.map ControlPanelMsg (controlPanelView model.controlPanel)
+                    Html.map ControlPanelMsg (controlPanelView model.controlPanel model.dataModel)
 
                 WorkoutListScreen ->
                     viewWorkoutListItem model.workoutList
@@ -225,7 +240,7 @@ workoutListInit =
               , workoutId = 4
               , description = Just "Build your endurance for the race"
               , segments =
-                    [ { startTime = 0, speed = paceToSpeed 7.0  }
+                    [ { startTime = 0, speed = paceToSpeed 7.0 }
                     , { startTime = Time.minute * 10, speed = paceToSpeed 5.0 }
                     , { startTime = Time.minute * 11, speed = paceToSpeed 7.0 }
                     , { startTime = Time.minute * 12, speed = paceToSpeed 5.0 }
@@ -254,10 +269,13 @@ workoutListInit =
     , Cmd.none
     )
 
-{-| Coverts pace in min/km to speed in km/hr -}
+
+{-| Coverts pace in min/km to speed in km/hr
+-}
 paceToSpeed : Float -> Float
 paceToSpeed pace =
-  1.0 / pace * 60.0
+    1.0 / pace * 60.0
+
 
 workoutListUpdate : Msg -> WorkoutListModel -> ( WorkoutListModel, Cmd Msg )
 workoutListUpdate msg model =
