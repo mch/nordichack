@@ -8,7 +8,8 @@ import Json.Decode exposing (decodeString, maybe, int, field, map3)
 import WebSocket exposing (listen)
 import FontAwesome
 import Color
-import Model exposing (HeartData)
+import Model exposing (DataModel, HeartData)
+import Plot
 
 
 type alias Model =
@@ -53,12 +54,15 @@ decodeHeartData json =
         heartdata
 
 
-view : Model -> Html Action
+view : DataModel -> Html Action
 view model =
     div []
         [ text "ANT+ Devices..."
         , div []
             [ FontAwesome.heartbeat Color.red 20
-            , text ("Current heart rate: " ++ model.heartrate)
+            , text ("Current heart rate: " ++ (Maybe.withDefault "--" (Maybe.map toString model.heartdata.heartrate)))
             ]
+        , div [ class "rr-plot"]
+            [Plot.viewSeries [ Plot.line (List.map (\(x,y) -> Plot.circle (toFloat x) (toFloat y))) ]
+            model.rrIntervalTimeSeries]
         ]

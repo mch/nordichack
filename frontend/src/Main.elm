@@ -182,7 +182,7 @@ view model =
                     viewMainMenu
 
                 AntScreen ->
-                    Html.map AntMsg (Ant.view model.antModel)
+                    Html.map AntMsg (Ant.view model.dataModel)
     in
         div [ class "main" ] (List.append navbar [ content ])
 
