@@ -128,9 +128,10 @@ update msg model =
                 ( newModel, newCmd, heartdata ) =
                     Ant.update msg model.antModel
 
-                nextRRInterval = Maybe.map2 (,) heartdata.eventTime heartdata.rrInterval
-                    |> Maybe.map List.singleton
-                    |> Maybe.withDefault []
+                nextRRInterval =
+                    Maybe.map2 (,) heartdata.eventTime heartdata.rrInterval
+                        |> Maybe.map List.singleton
+                        |> Maybe.withDefault []
 
                 dataModel =
                     model.dataModel
