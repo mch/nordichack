@@ -9,10 +9,12 @@ it talks to a hardware device.
 - Caches channels or ANT+ objects for specific devices
 """
 
+import random
 import sys
 import time
 
 from gevent.queue import Queue, Full
+from gevent import Greenlet, joinall, sleep
 
 from ant.core import driver, node, log
 from ant.core.exceptions import DriverError, NodeError, ChannelError
@@ -26,19 +28,25 @@ class HrmCallback(HeartRateCallback):
     def device_found(self, device_number, transmission_type):
         pass
 
-    def heartrate_data(self, computed_heartrate, rr_interval_ms): # rest to come soon
+    def heartrate_data(self, computed_heartrate, event_time_ms, rr_interval_ms): # rest to come soon
         try:
-            self.queue.put_nowait((computed_heartrate, rr_interval_ms))
+            self.queue.put_nowait((computed_heartrate, event_time_ms, rr_interval_ms))
         except Full:
             print("warning: consumer not reading hr messages from queue")
 
 class AntDevices(object):
-    def __init__(self):
+    def __init__(self, usb_product_id):
+        self.usb_product_id = usb_product_id
+
         self.usb_device = None
         self.node = None
         self.devices = {}
 
     def start(self): # todo USB device configuration input
+        if self.usb_product_id == 'fake':
+            print("Faking HR device with randomness")
+            return
+
         try:
             print("Opening USB...")
             self.usb_device = driver.USB2Driver(debug=True, idProduct=0x1009)
@@ -74,6 +82,26 @@ class AntDevices(object):
 
 
     def open_heartrate_device(self, device_number, transmission_type):
+        if self.usb_product_id == 'fake':
+            def random_heart_data(q):
+                event_time_ms = 0
+                while True:
+                    sleep(1)
+
+                    hr = random.randint(60, 180)
+                    rr_interval = random.randint(800, 1100)
+                    event_time_ms += 1000
+
+                    try:
+                        q.put_nowait((hr, rr_interval, event_time_ms))
+                    except Full:
+                        pass
+
+            device = {}
+            device['queue'] = Queue(maxsize=1)
+            device['callback'] = Greenlet.spawn(random_heart_data, device['queue'])
+            return device
+
         if not (self.usb_device and self.node):
             print("Unable to open hr device, no usb device or node.")
             return None

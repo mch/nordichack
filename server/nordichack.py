@@ -29,7 +29,11 @@ app.config.update(dict(
     USERNAME='admin',
     PASSWORD='admin',
     #ZMQ='tcp://localhost:5555'
-    ZMQ='fake'
+    ZMQ='fake',
+    #ANT_USB_PRODUCTID='fake',
+    ANT_USB_PRODUCTID=0x1009,
+    ANT_HR_DEVICE_NUM=23358,
+    ANT_HR_TRANS_TYPE=1
 ))
 app.config.from_envvar('NORDICHACK_SETTINGS', silent=True)
 
@@ -48,11 +52,12 @@ def get_ant_devices():
     global ant_devices
     if ant_devices is None:
         print("creating ant devices")
-        ant_devices = AntDevices()
         try:
+            ant_devices = AntDevices(app.config['ANT_USB_PRODUCTID'])
             ant_devices.start()
-        except:
+        except Exception as e:
             print("Unable to start ant node. Ensure USB key is connected are restart server.")
+            print("Unexpected exception: {0}".format(e))
             pass
 
     return ant_devices
@@ -146,7 +151,8 @@ def json_response(data):
 @app.route('/api/v1/heartrate', methods=['GET'])
 def heartrate():
     ant_devices = get_ant_devices()
-    hrm_device = ant_devices.open_heartrate_device(0, 0)
+    hrm_device = ant_devices.open_heartrate_device(app.config['ANT_HR_DEVICE_NUM'],
+                                                   app.config['ANT_HR_TRANS_TYPE'])
     if hrm_device:
         hrm = hrm_device['object']
         return json_response({'heartrate': hrm.computed_heartrate()})
@@ -156,8 +162,14 @@ def heartrate():
 @sockets.route('/heartrate')
 def heartrate_socket(ws):
     ant_devices = get_ant_devices()
-    hrm_device = ant_devices.open_heartrate_device(0, 0)
+    if not ant_devices:
+        print("No ANT+ USB device available.")
+        return
+
+    hrm_device = ant_devices.open_heartrate_device(app.config['ANT_HR_DEVICE_NUM'],
+                                                   app.config['ANT_HR_TRANS_TYPE'])
     if not hrm_device:
+        print("No hrm device available.")
         return
 
     def watch_for_socket_close():
@@ -169,14 +181,16 @@ def heartrate_socket(ws):
     read_greenlet = Greenlet.spawn(watch_for_socket_close)
 
     q = hrm_device['queue']
+    event_time_ms = 0
 
     while not ws.closed:
         try:
-            hr, rr_interval = q.get(timeout=0.2) # why is a timeout necessary?
-            json_str = {'heartrate': hr}
+            hr, event_time_ms, rr_interval = q.get(timeout=0.2) # why is a timeout necessary?
+
+            json_str = {'heartrate_bpm': hr}
 
             if rr_interval is not None:
-                json_str = {'heartrate': hr, 'rr_interval': rr_interval}
+                json_str = {'heartrate_bpm': hr, 'rr_interval_ms': rr_interval, 'event_time_ms': event_time_ms}
 
             msg = flask.json.dumps(json_str)
             ws.send(msg)
