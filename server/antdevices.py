@@ -28,9 +28,9 @@ class HrmCallback(HeartRateCallback):
     def device_found(self, device_number, transmission_type):
         pass
 
-    def heartrate_data(self, computed_heartrate, event_time_ms, rr_interval_ms): # rest to come soon
+    def heartrate_data(self, computed_heartrate, event_time_s, rr_interval_ms):
         try:
-            self.queue.put_nowait((computed_heartrate, event_time_ms, rr_interval_ms))
+            self.queue.put_nowait((computed_heartrate, event_time_s, rr_interval_ms))
         except Full:
             print("warning: consumer not reading hr messages from queue")
 
@@ -90,7 +90,7 @@ class AntDevices(object):
 
                     hr = random.randint(60, 180)
                     rr_interval = random.randint(800, 1100)
-                    event_time_ms += 1000
+                    event_time_s += 1.0
 
                     try:
                         q.put_nowait((hr, rr_interval, event_time_ms))

@@ -185,12 +185,12 @@ def heartrate_socket(ws):
 
     while not ws.closed:
         try:
-            hr, event_time_ms, rr_interval = q.get(timeout=0.2) # why is a timeout necessary?
+            hr, event_time_s, rr_interval = q.get(timeout=0.2) # why is a timeout necessary?
 
             json_str = {'heartrate_bpm': hr}
 
             if rr_interval is not None:
-                json_str = {'heartrate_bpm': hr, 'rr_interval_ms': rr_interval, 'event_time_ms': event_time_ms}
+                json_str = {'heartrate_bpm': hr, 'rr_interval_ms': rr_interval, 'event_time_s': event_time_s}
 
             msg = flask.json.dumps(json_str)
             ws.send(msg)
