@@ -1,4 +1,4 @@
-module Workout exposing (Workout, WorkoutSegment, WorkoutId, fromIntervalDuration, getSpeed, getIndex, getSegment)
+module Workout exposing (WorkoutListModel, Workout, WorkoutSegment, WorkoutId, fromIntervalDuration, getSpeed, getIndex, getSegment)
 
 import Time exposing (Time)
 
@@ -18,6 +18,11 @@ TODO:
 @docs getSpeed
 
 -}
+
+-- Workout List...
+type alias WorkoutListModel =
+    { workoutList : List Workout
+    }
 
 --type Workout
 --    = Workout WorkoutInternal
