@@ -131,7 +131,12 @@ update msg model =
                     Ant.update msg model.antModel
 
                 nextRRInterval =
-                    Maybe.map2 (,) heartdata.eventTime heartdata.rrInterval
+                    Maybe.map2 (\x y -> (x, toFloat y)) heartdata.eventTime heartdata.rrInterval
+                        |> Maybe.map List.singleton
+                        |> Maybe.withDefault []
+
+                nextHeartRate =
+                    Maybe.map2 (\x y -> (x, toFloat y)) heartdata.eventTime heartdata.heartrate
                         |> Maybe.map List.singleton
                         |> Maybe.withDefault []
 
@@ -142,6 +147,7 @@ update msg model =
                     { dataModel
                         | heartdata = heartdata
                         , rrIntervalTimeSeries = List.append dataModel.rrIntervalTimeSeries nextRRInterval
+                        , heartRateSeries = List.append dataModel.heartRateSeries nextHeartRate
                     }
             in
                 ( { model | antModel = newModel, dataModel = newDataModel }

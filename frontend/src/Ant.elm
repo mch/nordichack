@@ -4,7 +4,7 @@ import Html exposing (program, Html, text, div, button)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (send, request, stringBody, expectString)
-import Json.Decode exposing (decodeString, maybe, int, field, map3)
+import Json.Decode exposing (decodeString, maybe, int, float, field, map3)
 import WebSocket exposing (listen)
 import FontAwesome
 import Color
@@ -42,10 +42,11 @@ update action model =
 decodeHeartData : String -> HeartData
 decodeHeartData json =
     let
-        decoder = map3 HeartData
-            (maybe (field "heartrate_bpm" int))
-            (maybe (field "rr_interval_ms" int))
-            (maybe (field "event_time_ms" int))
+        decoder =
+            map3 HeartData
+                (maybe (field "heartrate_bpm" int))
+                (maybe (field "rr_interval_ms" int))
+                (maybe (field "event_time_s" float))
 
         heartdata =
             decodeString decoder json
@@ -62,7 +63,12 @@ view model =
             [ FontAwesome.heartbeat Color.red 20
             , text ("Current heart rate: " ++ (Maybe.withDefault "--" (Maybe.map toString model.heartdata.heartrate)))
             ]
-        , div [ class "rr-plot"]
-            [Plot.viewSeries [ Plot.line (List.map (\(x,y) -> Plot.circle (toFloat x) (toFloat y))) ]
-            model.rrIntervalTimeSeries]
+        , div [ class "rr-plot" ]
+            [ Plot.viewSeries [ Plot.line (List.map (\( x, y ) -> Plot.circle x y)) ]
+                model.rrIntervalTimeSeries
+            ]
+        , div [ class "hr-plot" ]
+            [ Plot.viewSeries [ Plot.line (List.map (\( x, y ) -> Plot.circle x y)) ]
+                model.heartRateSeries
+            ]
         ]
