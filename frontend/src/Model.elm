@@ -14,7 +14,7 @@ TODO:
 type alias DataModel =
     { heartdata : HeartData
     , rrIntervalTimeSeries : List ( Float, Float )
-    , heartRateSeries : List (Float, Float)
+    , heartRateSeries : List ( Float, Float )
     }
 
 
