@@ -84,7 +84,7 @@ class AntDevices(object):
     def open_heartrate_device(self, device_number, transmission_type):
         if self.usb_product_id == 'fake':
             def random_heart_data(q):
-                event_time_ms = 0
+                event_time_s = 0
                 while True:
                     sleep(1)
 
@@ -93,7 +93,7 @@ class AntDevices(object):
                     event_time_s += 1.0
 
                     try:
-                        q.put_nowait((hr, rr_interval, event_time_ms))
+                        q.put_nowait((hr, event_time_s, rr_interval))
                     except Full:
                         pass
 
