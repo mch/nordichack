@@ -1,7 +1,7 @@
 # NordicHack
 
 This project implements a controller and web interface for treadmills that use
-the MC2100LTS-30 motor controller board (Icon part number [263165]()). This likely
+the MC2100LTS-30 motor controller board (Icon part number 263165). This likely
 includes many Icon Fitness treadmills under various brand names such as
 Epic, NordicTrack, Proform, Reebok, and probably others. Use the part search
 form at [Icon Service Canada](https://www.iconservice.ca/CustomerService/parts)
@@ -14,7 +14,13 @@ construction of training programs, and recording fitness data, including heart r
 
 # Interface hardware
 
-todo: schematics
+Here is a very basic schematic for hooking the Pi up to the controller board. There is no need to cut anything to do this: the cable linking the console and the controller should have a connector at the top of the leg holding the console. The Pi and breadboard fit nicely in the tray between the legs. 
+
+I can't remember why the speed and incline sensors have different filter capacitors and resistors, they likely should be the same. Get you 'scope out!
+
+![Schematic](schematic/treadmill_schematic.png)
+
+The schematic can be edited in [Fritzing](http://fritzing.org/home/).
 
 # Components
 
