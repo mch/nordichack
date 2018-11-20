@@ -22,13 +22,16 @@ class PwmCommand:
         wiringpi.pwmWrite(PWM_PIN, self.dutyCycle)
 
 last_change_at = 0
+incline_pulses = 0
 def incline_sense_callback():
     global last_change_at
+    global incline_pulses
+    incline_pulses += 1
     current = wiringpi.millis()
     diff = current - last_change_at
     last_change_at = current
     
-    print("Incline changing! Time: %d, diff: %d" % (current, diff))
+    print("Incline changing! Time: %d, diff: %d, pulse: %d" % (current, diff, incline_pulses))
         
 def init():
     wiringpi.wiringPiSetupGpio()
@@ -49,7 +52,7 @@ def init():
 
     wiringpi.pinMode(INCLINE_SENSE_PIN, wiringpi.INPUT)
     wiringpi.pullUpDnControl(INCLINE_SENSE_PIN, wiringpi.PUD_UP)
-    wiringpi.wiringPiISR(INCLINE_SENSE_PIN, wiringpi.INT_EDGE_BOTH, incline_sense_callback)
+    wiringpi.wiringPiISR(INCLINE_SENSE_PIN, wiringpi.INT_EDGE_FALLING, incline_sense_callback)
     
 def cleanup():
    wiringpi.digitalWrite(PWM_PIN, 0)
@@ -74,7 +77,7 @@ def setDesiredSpeedKph(speedKph):
 
     binaryDutyCycle = int(round(dutyCycle * 2.55))
 
-    return PwmComment(binaryDutyCycle)
+    return PwmCommand(binaryDutyCycle)
 
 
 def test_speed():
@@ -84,16 +87,19 @@ def test_speed():
 
 def wait_for_incline_stop():
     global last_change_at
+    global incline_pulses
     done = False
     while not done:
-        wiringpi.delay(500)
+        wiringpi.delay(250)
         current = wiringpi.millis();
         diff = current - last_change_at
         print('Checking if we should stop at %d, diff %d' % (current, diff))
-        if diff > 800:
+        if diff > 1200:
             done = True
+    print('Incline change stopped after %d pulses' % incline_pulses)
+    incline_pulses = 0
     
-def test_incline_up():
+def calibrate_incline():
     global last_change_at
     print('Incline up...')
     wiringpi.digitalWrite(INCLINE_UP_PIN, 1)
@@ -110,8 +116,8 @@ def test_incline_up():
 try:
     print('Calling init()...')
     init()
-    # test_speed()
-    test_incline_up()
+    #test_speed()
+    calibrate_incline()
     print('Calling cleanup()...')
     cleanup()
 except Exception as e:
