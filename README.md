@@ -14,9 +14,13 @@ construction of training programs, and recording fitness data, including heart r
 
 # Interface hardware
 
-Here is a very basic schematic for hooking the Pi up to the controller board. There is no need to cut anything to do this: the cable linking the console and the controller should have a connector at the top of the leg holding the console. The Pi and breadboard fit nicely in the tray between the legs. 
+Here is a very basic schematic for hooking the Pi up to the controller board.
+There is no need to cut anything to do this: the cable linking the console and
+the controller should have a connector at the top of the leg holding the
+console. The Pi and breadboard fit nicely in the tray between the legs.
 
-I can't remember why the speed and incline sensors have different filter capacitors and resistors, they likely should be the same. Get you 'scope out!
+I can't remember why the speed and incline sensors have different filter
+capacitors and resistors, they likely should be the same. Get you 'scope out!
 
 ![Schematic](schematic/treadmill_schematic.png)
 

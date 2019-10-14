@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   printf("Current value of input pin: %d\n", current);
 
   FILE* f = fopen("data.txt", "w");
-  
+
   pwmWrite(PWM_PIN, 128);
   int i = 0;
   int last_rise_time = 0;
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
   int* timings = (int*)malloc(sizeof(int)*MAX_T); // Store the period at each rising edge
   int start = 0;
   int end = 0;
-  
+
   for (i = 0; i < 30; i++)
     {
       unsigned int start_ms = millis();
@@ -61,8 +61,8 @@ int main(int argc, char** argv)
       unsigned int rising_transitions = 0;
       unsigned int samples = 0;
       end = 0;
-	  
-      
+
+
       while (millis() - start_ms < 1000)
 	{
 	  delay(2); // ms
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 	      int t = time_us - last_rise_time;
 	      last_rise_time = time_us;
 	      last_t = t;
-	      
+
 	      t_avg = t_avg + (t - t_avg) / k;
 
 	      timings[end] = t;
@@ -107,15 +107,15 @@ int main(int argc, char** argv)
       //printf("samples: %d, falling: %d, rising: %d\n", samples, falling_transitions, rising_transitions);
       /* if (last_t > 0) */
       /* 	printf("last_t: %d, Speed: %f\n", last_t, 0.517 * (1.0 / (last_t / 1000000.0)) + 0.353); */
-      
+
       if (t_avg > 0)
 	printf("t_avg: %d, Speed: %f\n", t_avg, 0.517 * (1.0 / (t_avg / 1000000.0)) + 0.353);
     }
 
   fclose(f);
   pwmWrite(PWM_PIN, 0);
-  
+
   //  printf("Number of pulses detected: %d\n", counter);
-  
+
   return 0;
 }

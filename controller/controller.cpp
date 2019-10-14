@@ -11,14 +11,14 @@
 
 /**
  * For a given message, performs some action or retrieves some data.
- * 
+ *
  * May wish to change this into a data transformation function that
  * converts untrusted input into trusted command objects, in implement
  * interpretation of those commands elsewhere.
  *
  * Roughly, command names consist of a string matching [A-Z]+,
  * followed by a space, and any number of command specific arguments.
- * 
+ *
  * Returns a response message.
  */
 std::string handle_message(std::string msg, HardwareInterface& gpio)
@@ -50,7 +50,7 @@ std::string handle_message(std::string msg, HardwareInterface& gpio)
     {
       return "FAIL";
     }
-  
+
   return "OK";
 }
 
@@ -105,19 +105,19 @@ int main(int argc, char** argv)
 	{
 	  // TODO: check that safety key is inserted before allowing operation.
 
-	  // Want to respond as far as possible to user input, but
+	  // Want to respond as fast as possible to user input, but
 	  // don't want to exclusivly block waiting for it either,
 	  // since we need to check things like the presence of the
 	  // key and that motors are still turning... Call socket.recv
 	  // on a separate thread and create an event queue?
-	  
+
 	  zmq::message_t request;
 	  if (socket.recv(&request)) //, ZMQ_NOBLOCK))
 	    {
 	      std::string msg(static_cast<char*>(request.data()), request.size());
 
 	      std::string rsp = handle_message(msg, gpio);
-	  
+
 	      zmq::message_t reply(rsp.length());
 	      memcpy(reply.data(), rsp.c_str(), rsp.length());
 	      socket.send(reply);

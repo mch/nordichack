@@ -24,7 +24,7 @@ long getMillisecondsSinceStart()
 
   time_t elapsedSeconds = currentTime.tv_sec - startTime.tv_sec;
   long elapsedNanoSeconds = currentTime.tv_nsec - startTime.tv_nsec;
-  
+
   return lround(elapsedSeconds * 1.0e3) + lround(elapsedNanoSeconds / 1.0e6);
 }
 
@@ -72,8 +72,8 @@ int main(int argc, char** argv)
       printf("Freq: %d\n", frequency);
     }
   pwmWrite(PWM_PIN, 0);
-  
+
   printf("Number of pulses detected: %d\n", counter);
-  
+
   return 0;
 }

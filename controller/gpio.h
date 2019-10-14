@@ -16,11 +16,11 @@ class Gpio : public HardwareInterface
  public:
   Gpio();
   ~Gpio();
-  
+
   void init();
-  
+
   void shutdown();
-  
+
   void writePwm(int dutyCyclePercent);
 
   int readSpeedFrequency();
@@ -31,10 +31,10 @@ class FakeGpio : public HardwareInterface
  public:
   void init()
   {}
-  
+
   void shutdown()
   {}
-  
+
   void writePwm(int dutyCyclePercent)
   {
     if (dutyCyclePercent == 0)
@@ -53,11 +53,11 @@ class FakeGpio : public HardwareInterface
       {
 	return 0;
       }
-    
+
     return round(1.93 * speed - 0.657);
   }
 
  private:
   int speed;
-  
+
 };

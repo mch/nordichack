@@ -33,7 +33,7 @@ def init():
 def cleanup():
    wiringpi.digitalWrite(PWM_PIN, 0)
    wiringpi.pinMode(PWM_PIN, wiringpi.INPUT)
- 
+
 
 def setDesiredSpeedKph(speedKph):
 
