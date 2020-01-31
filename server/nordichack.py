@@ -10,7 +10,8 @@ from geventwebsocket.exceptions import WebSocketError
 import data
 import treadmill
 
-from antdevices import AntDevices
+# TODO make installing the ant module easier
+# from antdevices import AntDevices
 
 import flask
 from flask import Flask, request, session, g, redirect, url_for, abort, \

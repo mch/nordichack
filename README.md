@@ -77,8 +77,19 @@ program will use WiringPI to drive the GPIO pins to actually drive the
 treadmill's motor controller. The `fakecontroller` accepts commands over
 zmq but returns fake responses.
 
-The UI can be built on a machine that the Elm toolchain can be installed on.
-It can also be built using make:
+The UI can be built on a machine that the Elm 0.18 tool-chain can be installed on. The easiest way to install Elm 0.18 seems to be to use Node v8.17.0 and NPM 6.13.4. [nvm]( https://github.com/nvm-sh/nvm) is a nice way to manage multiple versions of node. Building a prod version of the JS file using closure apparently requires yarn, but you can install that with npm as well. This installs them both globally, which may not be desirable if you want the most recent version of Elm installed globally for other projects: 
+```
+npm install -g elm@0.18.0-exp5 yarn
+```
+
+You can instead install yarn and elm locally in the frontend directory:
+```
+cd frontend
+npm install elm@0.18.0-exp5 yarn
+export PATH=$(pwd)/node_modules/.bin:$PATH
+```
+
+Then you can build the front end using make:
 
 ```
 cd frontend
@@ -92,19 +103,14 @@ by flask. You can also build a minified version for production:
 make prod
 ```
 
-This project currently uses Flask for it's web server. Flask can be set up
+This project currently uses Flask for it's web server. Flask can be set up with the following commands: 
 
 ```
 cd server
 pip install virtualenv
 virtualenv venv
 . venv/bin/activate
-pip install flask
-pip install pyzmq
-pip install gevent
-pip install Flask-Sockets
-export FLASK_APP=nordichack.py
-export FLASK_DEBUG=1
+pip install flask pyzmq gevent Flask-Sockets
 deactivate
 ```
 
