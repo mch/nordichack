@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "elm": "^0.18.0-exp5",
     "google-closure-compiler-js": "^20161201.0.1"
   }
 }
