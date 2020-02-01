@@ -6,7 +6,6 @@
 
 #include <unistd.h>
 
-#include <wiringPi.h>
 #include <zmq.hpp>
 
 /**

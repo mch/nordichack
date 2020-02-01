@@ -6,7 +6,9 @@
 #include <ctime>
 #include <cmath>
 
+#ifndef USE_FAKE_GPIO
 #include <wiringPi.h>
+#endif
 
 #define PWM_PIN 18
 #define SPEED_SENSE_PIN 17
@@ -57,6 +59,7 @@ extern "C" {
   }
 }
 
+#ifndef USE_FAKE_GPIO
 Gpio::Gpio()
 {}
 
@@ -116,3 +119,4 @@ int Gpio::readSpeedFrequency()
 {
   return frequency;
 }
+#endif
