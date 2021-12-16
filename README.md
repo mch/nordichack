@@ -1,3 +1,10 @@
+# NOTE: Incomplete!
+
+This project sort of works, but it's pretty complicated to get running. I haven't
+worked on it in a couple of years. I do hope to spend some time on it during the 2021
+winter break and simplify it down to one binary and implement a UI that runs directly
+on the Raspberry Pi using the touchscreen accessory.
+
 # NordicHack
 
 This project implements a controller and web interface for treadmills that use
