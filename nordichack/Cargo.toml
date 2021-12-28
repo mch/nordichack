@@ -1,0 +1,11 @@
+[package]
+name = "nordichack"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rppal = "0.13.1"
+tui = "0.16"
+termion = "1.5"

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SRC=$(readlink -f "${BASH_SOURCE[0]}")
+DIR="$( cd "$( dirname "${SRC}" )" >/dev/null 2>&1 && pwd )"
+
+TARGET_HOST=treadmill.local
+TARGET_USER=treadmill
+TARGET_PATH=/home/treadmill/nordichack
+SOURCE_PATH=./target/armv7-unknown-linux-gnueabihf/release/nordichack
+
+# Build
+${DIR}/build
+
+# Copy to Pi
+rsync ${SOURCE_PATH} ${TARGET_USER}@${TARGET_HOST}:${TARGET_PATH}
+
+# Attempt to run the binary
+ssh -t ${TARGET_USER}@${TARGET_HOST} ${TARGET_PATH}
