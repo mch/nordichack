@@ -14,5 +14,12 @@ cargo build --release --target="armv7-unknown-linux-gnueabihf"
 Copy to your Pi to test. 
 
 ## Pi Configuration
+
+### GPIO Permissions
+Ensure the user running the program is in the gpio group.
+```
+sudo usermod -G gpio treadmill
+```
+
 ### Enable PWM on GPIO 18
-Add `dtoverlay=pwm` to `/boot/config.txt`.
+Add `dtoverlay=pwm` to `/boot/config.txt` and reboot.

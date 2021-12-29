@@ -11,7 +11,8 @@ use tui::Terminal;
 use tui::backend::TermionBackend;
 use tui::layout::{Layout, Constraint, Direction, Alignment};
 use tui::style::{Style, Color};
-use tui::widgets::{Widget, Block, Borders, Paragraph, Wrap};
+use tui::widgets::{Widget, Block, Borders, Paragraph, Wrap, List, ListItem};
+use tui::text::{Text};
 use crate::treadmill::{Event, Command};
 
 enum UiEvent {
@@ -60,6 +61,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
 
     // View Model
     let mut message: String = String::from("Hello NordicHack!");
+    let mut events: Vec<String> = Vec::new();
     let mut counter = 0;
     let mut speed: f32 = 0.0;
     let mut incline: f32 = 0.0;
@@ -67,6 +69,13 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
     // UI Loop
     loop {
         // View
+        let mut event_log_items: Vec<ListItem> = Vec::new(); //
+        //events.iter()
+        //  .map(|item| ListItem::new(Text::from(item))).collect();
+        for item in events.iter() {
+            event_log_items.push(ListItem::new(item.clone()));
+        }
+
         terminal.draw(|f| {
             let size = f.size();
             let block = Block::default()
@@ -78,7 +87,20 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                 .alignment(Alignment::Center)
                 .wrap(Wrap { trim: true });
 
-            f.render_widget(info, size);
+            let event_log = List::new(event_log_items)
+                .block(Block::default().title("Treadmill Events").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White))
+                //.highlight_style(Style::default().add_modifier(Modifier::ITALIC))
+            //.highlight_symbol(">>")
+                ;
+
+            let chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(f.size());
+
+            f.render_widget(info, chunks[0]);
+            f.render_widget(event_log, chunks[1]);
         })?;
         counter += 1;
 
@@ -132,15 +154,19 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                         match event {
                             Event::SpeedSet(speed) => {
                                 message = format!("Speed is now {}", speed);
+                                events.push(message.clone());
                             },
                             Event::InclineSet(speed) => {
                                 message = format!("Incline is now {}", speed);
+                                events.push(message.clone());
                             },
                             Event::KeyRemoved => {
                                 message = String::from("Safety Key removed!");
+                                events.push(message.clone());
                             },
                             Event::KeyInserted => {
                                 message = String::from("Safety Key inserted!");
+                                events.push(message.clone());
                             }
                             Event::Msg(msg) => {
                                 message = msg;

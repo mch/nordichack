@@ -22,6 +22,7 @@ struct TreadmillPins {
 enum TreadmillError {
     GpioError(gpio::Error),
     PwmError(pwm::Error),
+    GenericError(String),
 }
 
 impl From<gpio::Error> for TreadmillError {
@@ -43,6 +44,9 @@ impl std::fmt::Display for TreadmillError {
                 write!(f, "{}", err)
             },
             TreadmillError::PwmError(err) => {
+                write!(f, "{}", err)
+            },
+            TreadmillError::GenericError(err) => {
                 write!(f, "{}", err)
             }
         }
@@ -77,7 +81,8 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
 
     // PWM to drive the treadmill
     let pwm = Pwm::new(Channel::Pwm0)?;
-    pwm.set_polarity(Polarity::Normal)?;
+    // This line is causing a OS error 22:
+    // pwm.set_polarity(Polarity::Normal)?;
 
     let incline_up_pin = Gpio::new()?.get(ORANGE_INCLINE_UP_GPIO_PIN)?.into_output_low();
     let incline_down_pin = Gpio::new()?.get(YELLOW_INCLINE_DOWN_GPIO_PIN)?.into_output_low();
@@ -94,8 +99,6 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
             safety_event_tx.send(Event::KeyInserted);
         }
     });
-
-    // We want to detect rising edges on the safety switch to know when it is removed.
 
     Ok(TreadmillPins {
         speed_sensor_pin, pwm, incline_up_pin, incline_down_pin, incline_sensor_pin, safety_pin,
