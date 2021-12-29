@@ -58,7 +58,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
 
-    // Model
+    // View Model
     let mut message: String = String::from("Hello NordicHack!");
     let mut counter = 0;
     let mut speed: f32 = 0.0;
@@ -155,6 +155,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
         };
     }
 
+    tx.send(Command::Shutdown);
     terminal.clear()?;
 
     Ok(())

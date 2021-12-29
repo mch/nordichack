@@ -1,4 +1,6 @@
 use std::sync::mpsc::{channel, Sender, Receiver};
+use std::thread::{sleep};
+use std::time::{Duration};
 
 /**
  * Sent from the UI to the treadmill.
@@ -11,6 +13,7 @@ pub enum Command {
     SlowDown,
     Raise,
     Lower,
+    Shutdown, // Stop the treadmill and exit the thread
 }
 
 /**
@@ -25,35 +28,77 @@ pub enum Event {
 }
 
 /**
- * Treadmill message dispatcher, responsible for cross thread communication. Receives commands and
- * sends events to/from other threads.
+ * Fake treadmill for testing the UI
  */
-pub struct TreadmillDispatcher<T> {
-    treadmill: T,
-    tx: Sender<Event>,
-    rx: Receiver<Command>,
+pub struct FakeTreadmill {
+    command_rx: Receiver<Command>,
+    event_tx: Sender<Event>,
+    speed: f32,
+    incline: f32,
 }
 
-impl<T> TreadmillDispatcher<T> {
-    pub fn new(treadmill: T, tx: Sender<Event>, rx: Receiver<Command>) -> TreadmillDispatcher<T>
-    where T: Treadmill {
-        TreadmillDispatcher {
-            treadmill,
-            tx,
-            rx
+const DEFAULT_SPEED: f32 = 2.0;
+
+impl FakeTreadmill {
+
+    pub fn new(command_rx: Receiver<Command>, event_tx: Sender<Event>) -> Result<FakeTreadmill, String> {
+        Ok(FakeTreadmill { command_rx, event_tx, speed: 0.0, incline: 0.0 })
+    }
+
+    /**
+     * Blocks waiting for commands.
+     */
+    pub fn run(self: &mut Self) {
+        for command in self.command_rx.iter() {
+            match command {
+                Command::Start => {
+                    self.speed = DEFAULT_SPEED;
+                    sleep(Duration::from_millis(100));
+                    self.event_tx.send(Event::SpeedSet(self.speed));
+                },
+                Command::Stop => {
+                    self.speed = 0.0;
+                    sleep(Duration::from_millis(100));
+                    self.event_tx.send(Event::SpeedSet(self.speed));
+                },
+                Command::SetSpeed(desiredSpeed) => {
+                    self.speed = desiredSpeed;
+                    sleep(Duration::from_millis(100));
+                    self.event_tx.send(Event::SpeedSet(self.speed));
+                },
+                Command::SpeedUp => {
+                    self.speed += 1.0;
+                    sleep(Duration::from_millis(100));
+                    self.event_tx.send(Event::SpeedSet(self.speed));
+                },
+                Command::SlowDown => {
+                    if self.speed > 0.0 {
+                        self.speed -= 1.0;
+                        if self.speed < 0.0 { self.speed = 0.0 };
+                        sleep(Duration::from_millis(100));
+                        self.event_tx.send(Event::SpeedSet(self.speed));
+                    }
+                },
+                Command::Raise => {
+                    self.incline += 1.0;
+                    sleep(Duration::from_millis(100));
+                    self.event_tx.send(Event::InclineSet(self.incline));
+                },
+                Command::Lower => {
+                    if self.incline > 0.0 {
+                        self.incline -= 1.0;
+                        if self.incline < 0.0 { self.incline = 0.0; };
+                        sleep(Duration::from_millis(100));
+                        self.event_tx.send(Event::InclineSet(self.incline));
+                    }
+                },
+                Command::Shutdown => {
+                    self.speed = 0.0;
+                    sleep(Duration::from_millis(100));
+                    self.event_tx.send(Event::SpeedSet(self.speed));
+                    break;
+                }
+            }
         }
     }
-}
-
-/**
- * Treadmill trait
- */
-pub trait Treadmill {
-    // fn start();
-    // fn stop();
-    // fn set_speed(speed: f32);
-    // fn speed_up();
-    // fn slow_down();
-    // fn raise();
-    // fn lower();
 }

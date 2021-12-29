@@ -1,3 +1,4 @@
 #!/bin/bash
 
-cargo build --release --target="armv7-unknown-linux-gnueabihf"
+cargo build --release --target="armv7-unknown-linux-gnueabihf" \
+      --no-default-features --features real_treadmill

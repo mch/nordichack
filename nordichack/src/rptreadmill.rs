@@ -1,7 +1,7 @@
 use std::sync::mpsc::{Sender, Receiver};
 use rppal::gpio::{self, Gpio, InputPin, OutputPin, Trigger, Level};
 use rppal::pwm::{self, Pwm, Channel, Polarity};
-use crate::treadmill::{Treadmill, Command, Event};
+use crate::treadmill::{Command, Event};
 
 const GREEN_SPEED_SENSOR_GPIO_PIN: u8 = 17;
 const BLUE_PWM_GPIO_PIN: u8 = 18;
@@ -114,8 +114,39 @@ impl PiTreadmill {
         pins.map(|pins| PiTreadmill { pins, command_rx, event_tx })
             .map_err(|err| err.to_string())
     }
+
+    /**
+     * Blocks waiting for commands.
+     */
+    pub fn run(self) {
+        for command in self.command_rx {
+            match command {
+                Command::Start => {
+                    
+                },
+                Command::Stop => {
+                    
+                },
+                Command::SetSpeed(desiredSpeed) => {
+                    
+                },
+                Command::SpeedUp => {
+                    
+                },
+                Command::SlowDown => {
+                    
+                },
+                Command::Raise => {
+                    
+                },
+                Command::Lower => {
+                    
+                },
+                Command::Shutdown => {
+                    break;
+                }
+            }
+        }
+    }
 }
 
-impl Treadmill for PiTreadmill {
-
-}
