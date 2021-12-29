@@ -69,12 +69,8 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
     // UI Loop
     loop {
         // View
-        let mut event_log_items: Vec<ListItem> = Vec::new(); //
-        //events.iter()
-        //  .map(|item| ListItem::new(Text::from(item))).collect();
-        for item in events.iter() {
-            event_log_items.push(ListItem::new(item.clone()));
-        }
+        let event_log_items: Vec<ListItem> = events.iter().rev()
+          .map(|item| ListItem::new(Text::from(item.clone()))).collect();
 
         terminal.draw(|f| {
             let size = f.size();
@@ -138,7 +134,15 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                             },
                             // etc
                             Key::Char(' ') => {
-                                message = String::from("Emergency Stop!");
+                                if speed == 0.0 {
+                                    tx.send(Command::Start);
+                                    message = String::from("Start");
+                                    speed = 1.0;
+                                } else {
+                                    tx.send(Command::Stop);
+                                    message = String::from("Stop");
+                                    speed = 0.0;
+                                }
                             },
                             Key::Esc => {
                                 break;
@@ -170,6 +174,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                             }
                             Event::Msg(msg) => {
                                 message = msg;
+                                events.push(message.clone());
                             }
                         }
                     }
