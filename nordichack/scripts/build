@@ -1,4 +1,11 @@
 #!/bin/bash
+SRC=$(readlink -f "${BASH_SOURCE[0]}")
+DIR="$( cd "$( dirname "${SRC}" )" >/dev/null 2>&1 && pwd )"
 
+# Use a cargo home outside the container to avoid downloading stuff that should be cached every
+# time.
+export CARGO_HOME=${DIR}/../.cargo_home
+
+RUSTFLAGS='-C link-arg=-s'
 cargo build --release --target="armv7-unknown-linux-gnueabihf" \
       --no-default-features --features real_treadmill

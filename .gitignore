@@ -13,3 +13,5 @@ elm-stuff
 node_modules
 data/
 ant-docs/
+nordichack/.cargo_home
+nordichack/target

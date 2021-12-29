@@ -1,0 +1,11 @@
+#!/bin/bash
+SRC=$(readlink -f "${BASH_SOURCE[0]}")
+DIR="$( cd "$( dirname "${SRC}" )" >/dev/null 2>&1 && pwd )"
+
+pushd ${DIR}/../docker
+docker build -t mch/nordichack \
+                 --build-arg user=$(whoami) \
+                 --build-arg userid=$(id -u) \
+                 --build-arg groupid=$(id -g) \
+                 .
+popd

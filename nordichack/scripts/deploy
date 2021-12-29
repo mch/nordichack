@@ -8,9 +8,6 @@ TARGET_USER=treadmill
 TARGET_PATH=/home/treadmill/nordichack
 SOURCE_PATH=./target/armv7-unknown-linux-gnueabihf/release/nordichack
 
-# Build
-${DIR}/build
-
 # Copy to Pi
 rsync ${SOURCE_PATH} ${TARGET_USER}@${TARGET_HOST}:${TARGET_PATH}
 
