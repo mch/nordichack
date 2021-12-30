@@ -28,7 +28,7 @@ fn main() {
     let mut treadmill = PiTreadmill::new(command_rx, event_tx.clone());
 
     #[cfg(feature = "fake_treadmill")]
-    let mut treadmill = FakeTreadmill::new(command_rx, event_tx.clone());
+    let treadmill = FakeTreadmill::new(command_rx, event_tx.clone());
 
     match treadmill {
         Ok(_) => {

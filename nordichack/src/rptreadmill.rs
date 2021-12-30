@@ -18,7 +18,7 @@ struct TreadmillPins {
     incline_up_pin: OutputPin,
     incline_down_pin: OutputPin,
     incline_sensor_pin: InputPin,
-    safety_pin: InputPin,
+    //safety_pin: InputPin,
 }
 
 enum TreadmillError {
@@ -66,8 +66,8 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
     let speed_event_tx = event_tx.clone();
     let mut speed_count = 0;
 
-    // TODO The interrupts are currently too noisy when the treadmill is running,
-    // even the safety key one. Might need to add the filter caps back into the circuit.
+    // TODO The interrupts are currently too noisy when the treadmill is running, even the safety
+    // key one. Might need to add the filter caps back into the circuit, or poll those pins instead.
 
     // speed_sensor_pin.set_async_interrupt(Trigger::FallingEdge, move |_level| {
     //     // What do we actually want to do with this information? It might not be relevant to the
@@ -101,8 +101,8 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
 
     // When the key is inserted, the safety switch closes to ground, and must be pulled high
     // otherwise.
-    let mut safety_pin = Gpio::new()?.get(SAFETY_SWITCH_GPIO_PIN)?.into_input_pullup();
-    let safety_event_tx = event_tx.clone();
+    // let mut safety_pin = Gpio::new()?.get(SAFETY_SWITCH_GPIO_PIN)?.into_input_pullup();
+    // let safety_event_tx = event_tx.clone();
     // safety_pin.set_async_interrupt(Trigger::Both, move |level| {
     //     // TODO immediately stop the treadmill.
     //     //pwm.disable(); // use of moved value
@@ -114,7 +114,7 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
     // });
 
     Ok(TreadmillPins {
-        speed_sensor_pin, pwm, incline_up_pin, incline_down_pin, incline_sensor_pin, safety_pin,
+        speed_sensor_pin, pwm, incline_up_pin, incline_down_pin, incline_sensor_pin//, safety_pin,
     })
 }
 
@@ -132,9 +132,52 @@ impl PiTreadmill {
     }
 
     /**
+     * Start a new thread that polls inputs, updating state and sending events when things change.
+     */
+    pub fn watch_inputs(self: &mut Self) {
+        let event_tx = self.event_tx.clone();
+        let t = thread::spawn(move || {
+            // Shannon's sampling theorem:
+            // 𝑓ₛ ≥ 2𝑊
+            let safety_pin = Gpio::new()
+                .and_then(|gpio| gpio.get(SAFETY_SWITCH_GPIO_PIN))
+                .map(|pin| pin.into_input_pullup());
+
+            if let Ok(pin) = safety_pin {
+                let mut safety_pin_level = pin.read();
+
+                loop {
+                    let current_level = pin.read();
+                    if current_level != safety_pin_level {
+                        safety_pin_level = current_level;
+
+                        let r = if current_level == Level::High {
+                            event_tx.send(Event::KeyRemoved)
+                        } else {
+                            event_tx.send(Event::KeyInserted)
+                        };
+                        if r.is_err() {
+                            // logfile?
+                            break;
+                        }
+                    }
+                    thread::sleep(Duration::from_millis(100));
+                }
+            }
+
+        });
+        // if let Err(_err) = t.join() {
+        //     // logfile?
+        // };
+    }
+
+    /**
      * Blocks waiting for commands.
      */
     pub fn run(self: &mut Self) {
+
+        self.watch_inputs();
+
         for command in self.command_rx.iter() {
             match command {
                 Command::Start => {
@@ -146,17 +189,19 @@ impl PiTreadmill {
                                   .map_err(|err| TreadmillError::GenericError(err.to_string())))
                         .or_else(|err| self.event_tx.send(Event::Msg(err.to_string())))
                         ;
-                    self.event_tx.send(Event::Msg(format!("PWM Polarity: {:?}, period: {:?}, duty: {:?}",
-                                                          self.pins.pwm.polarity(),
-                                                          self.pins.pwm.period(),
-                                                          self.pins.pwm.duty_cycle())));
+                    let r = self.event_tx.send(
+                        Event::Msg(format!("PWM Polarity: {:?}, period: {:?}, duty: {:?}",
+                                           self.pins.pwm.polarity(),
+                                           self.pins.pwm.period(),
+                                           self.pins.pwm.duty_cycle())));
+                    if r.is_err() { break; }
                 },
                 Command::Stop => {
-                    self.pins.pwm.set_duty_cycle(0.0);
-                    self.pins.pwm.disable();
+                    let r = self.pins.pwm.set_duty_cycle(0.0)
+                        .and_then(|()| self.pins.pwm.disable());
                     self.event_tx.send(Event::SpeedSet(0.0));
                 },
-                Command::SetSpeed(desiredSpeed) => {
+                Command::SetSpeed(desired_speed) => {
                 },
                 Command::SpeedUp => {
                 },
