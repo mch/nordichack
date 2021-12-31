@@ -14,6 +14,7 @@ use tui::style::{Style, Color};
 use tui::widgets::{Widget, Block, Borders, Paragraph, Wrap, List, ListItem};
 use tui::text::{Text};
 use crate::treadmill::{Event, Command};
+use crate::treadmill;
 
 enum UiEvent {
     UiKey(Key),
@@ -109,39 +110,68 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                         match key {
                             Key::Up => {
                                 message = String::from("Going Faster!");
-                                tx.send(Command::SpeedUp);
+                                speed += treadmill::DEFAULT_KM_PER_HOUR_INCREMENT;
+                                tx.send(Command::SetSpeed(speed));
                             },
                             Key::Down => {
                                 message = String::from("Slowing down...");
-                                tx.send(Command::SlowDown);
+                                speed -= treadmill::DEFAULT_KM_PER_HOUR_INCREMENT;
+                                tx.send(Command::SetSpeed(speed));
                             },
-                            Key::PageUp => {
+                            Key::Right => {
                                 message = String::from("Steeper!");
                                 tx.send(Command::Raise);
                             }
-                            Key::PageDown => {
+                            Key::Left => {
                                 message = String::from("Not... so... steep.");
                                 tx.send(Command::Lower);
                             },
                             Key::Char('1') => {
-                                tx.send(Command::SetSpeed(1.0));
+                                speed = 2.0;
+                                tx.send(Command::SetSpeed(speed));
                             },
                             Key::Char('2') => {
-                                tx.send(Command::SetSpeed(2.0));
+                                speed = 4.0;
+                                tx.send(Command::SetSpeed(speed));
                             },
                             Key::Char('3') => {
-                                tx.send(Command::SetSpeed(3.0));
+                                speed = 6.0;
+                                tx.send(Command::SetSpeed(speed));
+                            },
+                            Key::Char('4') => {
+                                speed = 8.0;
+                                tx.send(Command::SetSpeed(speed));
+                            },
+                            Key::Char('5') => {
+                                speed = 10.0;
+                                tx.send(Command::SetSpeed(speed));
+                            },
+                            Key::Char('6') => {
+                                speed = 12.0;
+                                tx.send(Command::SetSpeed(speed));
+                            },
+                            Key::Char('7') => {
+                                speed = 14.0;
+                                tx.send(Command::SetSpeed(speed));
+                            },
+                            Key::Char('8') => {
+                                speed = 16.0;
+                                tx.send(Command::SetSpeed(speed));
+                            },
+                            Key::Char('9') => {
+                                speed = 18.0;
+                                tx.send(Command::SetSpeed(speed));
                             },
                             // etc
                             Key::Char(' ') => {
                                 if speed == 0.0 {
-                                    tx.send(Command::Start);
+                                    speed = treadmill::DEFAULT_KM_PER_HOUR;
+                                    tx.send(Command::SetSpeed(speed));
                                     message = String::from("Start");
-                                    speed = 1.0;
                                 } else {
-                                    tx.send(Command::Stop);
-                                    message = String::from("Stop");
                                     speed = 0.0;
+                                    tx.send(Command::SetSpeed(speed));
+                                    message = String::from("Stop");
                                 }
                             },
                             Key::Esc => {
@@ -156,7 +186,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                     },
                     UiEvent::UiTreadmill(event) => {
                         match event {
-                            Event::SpeedSet(speed) => {
+                            Event::SpeedChanged(speed) => {
                                 message = format!("Speed is now {}", speed);
                                 events.push(message.clone());
                             },
