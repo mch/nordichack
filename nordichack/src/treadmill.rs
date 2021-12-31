@@ -3,6 +3,16 @@ use std::thread::{sleep};
 use std::time::{Duration};
 
 /**
+ * Default speed if the start button is pressed.
+ */
+pub const DEFAULT_KM_PER_HOUR: f64 = 2.0;
+
+/**
+ * How much the speed should change when the ± buttons are pressed.
+ */
+pub const DEFAULT_KM_PER_HOUR_INCREMENT: f64 = 0.5;
+
+/**
  * Sent from the UI to the treadmill.
  */
 pub enum Command {

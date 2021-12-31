@@ -2,8 +2,9 @@ use std::sync::mpsc::{Sender, Receiver};
 use rppal::gpio::{self, Gpio, InputPin, OutputPin, Trigger, Level};
 use rppal::pwm::{self, Pwm, Channel, Polarity};
 use std::thread;
-use std::time::{Duration};
+use std::time::{Duration, Instant};
 use crate::treadmill::{Command, Event};
+use crate::treadmill;
 
 const GREEN_SPEED_SENSOR_GPIO_PIN: u8 = 17;
 const BLUE_PWM_GPIO_PIN: u8 = 18;
@@ -12,8 +13,10 @@ const YELLOW_INCLINE_DOWN_GPIO_PIN: u8 = 22;
 const VIOLET_INCLINE_SENSOR_GPIO_PIN: u8 = 23;
 const SAFETY_SWITCH_GPIO_PIN: u8 = 24;
 
+const PWM_PERIOD: Duration = Duration::from_millis(50);
+
 struct TreadmillPins {
-    speed_sensor_pin: InputPin,
+    //speed_sensor_pin: InputPin,
     pwm: Pwm,
     incline_up_pin: OutputPin,
     incline_down_pin: OutputPin,
@@ -62,9 +65,9 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
     // Inputs to the Pi are pulled high by default, and the motor controller pulls them low to
     // generate a signal. Outputs from the Pi are low by default, setting them high causes stuff to
     // happen.
-    let mut speed_sensor_pin = Gpio::new()?.get(GREEN_SPEED_SENSOR_GPIO_PIN)?.into_input_pullup();
-    let speed_event_tx = event_tx.clone();
-    let mut speed_count = 0;
+    // let mut speed_sensor_pin = Gpio::new()?.get(GREEN_SPEED_SENSOR_GPIO_PIN)?.into_input_pullup();
+    // let speed_event_tx = event_tx.clone();
+    // let mut speed_count = 0;
 
     // TODO The interrupts are currently too noisy when the treadmill is running, even the safety
     // key one. Might need to add the filter caps back into the circuit, or poll those pins instead.
@@ -77,9 +80,9 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
     //     speed_event_tx.send(Event::Msg(format!("Speed count: {}", speed_count)));
     // });
 
-    let mut incline_sensor_pin = Gpio::new()?.get(VIOLET_INCLINE_SENSOR_GPIO_PIN)?.into_input_pullup();
-    let incline_event_tx = event_tx.clone();
-    let mut incline_count = 0;
+    let mut incline_sensor_pin = Gpio::new()?.get(VIOLET_INCLINE_SENSOR_GPIO_PIN)?.into_input_pulldown();
+    // let incline_event_tx = event_tx.clone();
+    // let mut incline_count = 0;
     // incline_sensor_pin.set_async_interrupt(Trigger::FallingEdge, move |_level| {
     //     // What do we actually want to do with this information? It might not be relevant to the
     //     // user, and is more of a fail safe, e.g. if nothing is received here, the treadmill should
@@ -91,7 +94,7 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
     // PWM to drive the treadmill
     let pwm = Pwm::new(Channel::Pwm0)?;
     pwm.disable();
-    pwm.set_period(Duration::from_millis(50));
+    pwm.set_period(PWM_PERIOD);
     pwm.set_pulse_width(Duration::from_millis(50));
     // This line is causing a OS error 22:
     // pwm.set_polarity(Polarity::Normal)?;
@@ -114,7 +117,7 @@ fn set_up_pins(event_tx: &Sender<Event>) -> Result<TreadmillPins, TreadmillError
     // });
 
     Ok(TreadmillPins {
-        speed_sensor_pin, pwm, incline_up_pin, incline_down_pin, incline_sensor_pin//, safety_pin,
+        /*speed_sensor_pin,*/ pwm, incline_up_pin, incline_down_pin, incline_sensor_pin//, safety_pin,
     })
 }
 
@@ -139,32 +142,64 @@ impl PiTreadmill {
         let t = thread::spawn(move || {
             // Shannon's sampling theorem:
             // 𝑓ₛ ≥ 2𝑊
+
+            // Should I be able to use a single Gpio? Multiple and_then results in moving the value,
+            // and as_ref() causes errors I don't understand.
+            let gpio = Gpio::new();
             let safety_pin = Gpio::new()
                 .and_then(|gpio| gpio.get(SAFETY_SWITCH_GPIO_PIN))
                 .map(|pin| pin.into_input_pullup());
 
-            if let Ok(pin) = safety_pin {
-                let mut safety_pin_level = pin.read();
+            let speed_pin = gpio
+                .and_then(|gpio| gpio.get(GREEN_SPEED_SENSOR_GPIO_PIN))
+                .map(|pin| pin.into_input_pullup());
 
-                loop {
-                    let current_level = pin.read();
-                    if current_level != safety_pin_level {
-                        safety_pin_level = current_level;
-
-                        let r = if current_level == Level::High {
-                            event_tx.send(Event::KeyRemoved)
-                        } else {
-                            event_tx.send(Event::KeyInserted)
-                        };
-                        if r.is_err() {
-                            // logfile?
-                            break;
-                        }
-                    }
-                    thread::sleep(Duration::from_millis(100));
-                }
+            if safety_pin.is_err() || speed_pin.is_err() {
+                // log message
+                return;
             }
 
+            // Are there better ways to handle multiple values in Results?
+            let safety_pin = safety_pin.unwrap();
+            let speed_pin = speed_pin.unwrap();
+
+            let mut safety_pin_level = safety_pin.read();
+            let mut speed_pin_level = speed_pin.read();
+            let mut speed_pin_transition_high_instant = Instant::now();
+
+            loop {
+                let current_level = safety_pin.read();
+                if current_level != safety_pin_level {
+                    safety_pin_level = current_level;
+
+                    let r = if current_level == Level::High {
+                        // What's the best way to get this back to the main treadmill thread so that
+                        // it can stop the treadmill? Don't want to round trip to the UI. Do I need
+                        // ANOTHER thread to merge the commands from the UI with this KeyRemoved
+                        // event? Probably best to pass a command_tx clone from main into here.
+                        event_tx.send(Event::KeyRemoved)
+                    } else {
+                        event_tx.send(Event::KeyInserted)
+                    };
+                    if r.is_err() {
+                        // logfile?
+                        break;
+                    }
+                }
+
+                let current_speed_pin_level = speed_pin.read();
+                let current_speed_pin_read_instant = Instant::now();
+                if current_speed_pin_level != speed_pin_level {
+                    if speed_pin_level == Level::High {
+                        let period = speed_pin_transition_high_instant.elapsed().as_millis();
+                        event_tx.send(Event::Msg(format!("Speed pin period: {} ms", period)));
+                        speed_pin_transition_high_instant = current_speed_pin_read_instant;
+                    }
+                    speed_pin_level = current_speed_pin_level;
+                }
+
+                thread::sleep(Duration::from_millis(10));
+            }
         });
         // if let Err(_err) = t.join() {
         //     // logfile?
@@ -181,9 +216,13 @@ impl PiTreadmill {
         for command in self.command_rx.iter() {
             match command {
                 Command::Start => {
+                    // if running return
+
+                    let duty_cycle = PiTreadmill::km_per_hour_to_duty_cycle(treadmill::DEFAULT_KM_PER_HOUR);
+
                     self.pins.pwm.enable()
-                        .and_then(|()| self.pins.pwm.set_period(Duration::from_millis(50)))
-                        .and_then(|()| self.pins.pwm.set_duty_cycle(0.234))
+                        .and_then(|()| self.pins.pwm.set_period(PWM_PERIOD))
+                        .and_then(|()| self.pins.pwm.set_duty_cycle(duty_cycle))
                         .map_err(|err| TreadmillError::GenericError(err.to_string()))
                         .and_then(|()| self.event_tx.send(Event::SpeedSet(1.0))
                                   .map_err(|err| TreadmillError::GenericError(err.to_string())))
@@ -209,20 +248,32 @@ impl PiTreadmill {
                 },
                 Command::Raise => {
                     // TODO check current incline, don't go too high
+                    self.event_tx.send(Event::Msg(String::from("raising incline...")));
                     self.pins.incline_up_pin.toggle();
-                    thread::sleep(Duration::from_millis(1000));
+                    thread::sleep(Duration::from_millis(5000));
                     self.pins.incline_up_pin.toggle();
+                    self.event_tx.send(Event::Msg(String::from("Done raising incline.")));
                 },
                 Command::Lower => {
                     // TODO check current incline, don't go too low
                     self.pins.incline_down_pin.toggle();
-                    thread::sleep(Duration::from_millis(1000));
+                    thread::sleep(Duration::from_millis(5000));
                     self.pins.incline_down_pin.toggle();
                 },
                 Command::Shutdown => {
                     break;
                 }
             }
+        }
+    }
+
+    pub fn km_per_hour_to_duty_cycle(kph: f64) -> f64 {
+        // From measurements using the stock console,
+        // 𝐷 = 3.42𝑆 + 18.6
+        if kph <= 0.0 {
+            0.0
+        } else {
+            1.0f64.max(3.42f64 * kph + 18.6f64)
         }
     }
 }
