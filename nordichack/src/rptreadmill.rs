@@ -192,14 +192,14 @@ impl PiTreadmill {
                 if current_speed_pin_level != speed_pin_level {
                     if speed_pin_level == Level::High {
                         let period_ms = speed_pin_transition_high_instant.elapsed().as_millis();
-                        event_tx.send(Event::Msg(format!("Speed pin period: {} ms", period_ms)));
+                        //event_tx.send(Event::Msg(format!("Speed pin period: {} ms", period_ms)));
                         speed_pin_transition_high_instant = current_speed_pin_read_instant;
 
                         let period_sec = speed_pin_transition_high_instant.elapsed().as_secs_f32();
                         let frequency = 1.0 / period_sec;
                         let km_per_hr = 0.517 * frequency + 0.353;
                         // TODO round to like 1 or 2 decimal places and only emit the event when it actually changes.
-                        event_tx.send(Event::SpeedChanged(km_per_hr));
+                        //event_tx.send(Event::SpeedChanged(km_per_hr));
                     }
                     speed_pin_level = current_speed_pin_level;
                 }
@@ -257,6 +257,7 @@ impl PiTreadmill {
     }
 
     fn set_speed(self: &Self, speed: f32) {
+        self.log(&format!("set speed command received, desired speed: {}", speed));
         if speed > 0.0 {
             if let Ok(false) = self.pins.pwm.is_enabled() {
                 self.start();
@@ -268,24 +269,25 @@ impl PiTreadmill {
             }
         }
 
-        let duty_cycle = PiTreadmill::km_per_hour_to_duty_cycle(treadmill::DEFAULT_KM_PER_HOUR);
+        let duty_cycle = PiTreadmill::km_per_hour_to_duty_cycle(speed);
+        self.log(&format!("setting duty cycle to {}", duty_cycle));
 
         self.pins.pwm.enable()
             .and_then(|()| self.pins.pwm.set_duty_cycle(duty_cycle))
             .map_err(|err| TreadmillError::GenericError(err.to_string()))
-            .and_then(|()| self.event_tx.send(Event::SpeedChanged(treadmill::DEFAULT_KM_PER_HOUR))
-                      .map_err(|err| TreadmillError::GenericError(err.to_string())))
             .or_else(|err| self.event_tx.send(Event::Msg(err.to_string())))
             ;
-        // let r = self.event_tx.send(
-        //     Event::Msg(format!("PWM Polarity: {:?}, period: {:?}, duty: {:?}",
-        //                        self.pins.pwm.polarity(),
-        //                        self.pins.pwm.period(),
-        //                        self.pins.pwm.duty_cycle())));
+        let r = self.event_tx.send(
+            Event::Msg(format!("PWM Polarity: {:?}, period: {:?}, duty: {:?}",
+                               self.pins.pwm.polarity(),
+                               self.pins.pwm.period(),
+                               self.pins.pwm.duty_cycle())));
     }
 
     fn stop(self: &Self) {
+        self.log("received stop command");
         if let Ok(false) = self.pins.pwm.is_enabled() {
+            self.log("pwm already disabled");
             return
         }
 
@@ -300,8 +302,12 @@ impl PiTreadmill {
         if kph <= 0.0 {
             0.0
         } else {
-            1.0f64.max(3.42f64 * f64::from(kph) + 18.6f64)
+            1.0f64.max(3.42f64 * f64::from(kph) + 18.6f64) / 100f64
         }
+    }
+
+    fn log(self: &Self, msg: &str) {
+        self.event_tx.send(Event::Msg(msg.to_string()));
     }
 }
 

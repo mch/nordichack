@@ -65,6 +65,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
     let mut events: Vec<String> = Vec::new();
     let mut counter = 0;
     let mut speed: f32 = 0.0;
+    let mut actual_speed: f32 = 0.0;
     let mut incline: f32 = 0.0;
 
     // UI Loop
@@ -197,6 +198,10 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                             Event::KeyRemoved => {
                                 message = String::from("Safety Key removed!");
                                 events.push(message.clone());
+                                speed = 0.0;
+                                // TODO don't depend on the UI to do this
+                                tx.send(Command::SetSpeed(speed));
+                                message = String::from("Emergency Stop!");
                             },
                             Event::KeyInserted => {
                                 message = String::from("Safety Key inserted!");

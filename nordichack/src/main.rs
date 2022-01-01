@@ -14,11 +14,10 @@ fn main() {
     let (event_tx, event_rx) = channel::<treadmill::Event>();
     let (command_tx, command_rx) = channel::<treadmill::Command>();
 
-    // Start a separate thread for handling GPIO inputs?
-    // And a separate one for outputs?
-    // Run UI on main thread or separate thread?
     let ui_thread = thread::spawn(move || {
-        nhtui::tui(command_tx, event_rx);
+        if let Err(err) = nhtui::tui(command_tx, event_rx) {
+            println!("Failed to start UI thread: {}", err);
+        };
     });
 
     #[cfg(all(feature = "real_treadmill", feature = "fake_treadmill"))]
@@ -45,6 +44,8 @@ fn main() {
         }
     }
 
-    ui_thread.join();
+    if let Err(err) = ui_thread.join() {
+        println!("Failed to join UI thread: {:?}", err);
+    }
 }
 
