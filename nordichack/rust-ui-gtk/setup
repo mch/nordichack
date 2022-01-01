@@ -1,0 +1,13 @@
+#!/bin/bash -ex
+
+# Copy necessary files from RPi
+mkdir -p sysroot/usr/share/pkgconfig/
+mkdir -p sysroot/lib/arm-linux-gnueabihf/pkgconfig/
+rsync -av treadmill.local:/usr/share/pkgconfig/ sysroot/usr/share/pkgconfig/
+rsync -av treadmill.local:/usr/lib/arm-linux-gnueabihf/pkgconfig sysroot/lib/arm-linux-gnueabihf/pkgconfig
+
+# TODO this libs should go in sysroot not target/release/deps
+rsync -av --include-from=files-from.txt --exclude='*' \
+      treadmill.local:/usr/lib/arm-linux-gnueabihf/ \
+      /home/mch/Work/nordichack/nordichack/rust-ui-gtk/target/release/deps
+

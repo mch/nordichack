@@ -1,0 +1,9 @@
+#!/bin/sh
+
+SYSROOT="$(pwd)/sysroot"
+
+export PKG_CONFIG_PATH=
+export PKG_CONFIG_LIBDIR=${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig
+export PKG_CONFIG_SYSROOT_DIR=${SYSROOT}
+
+exec pkg-config "$@"

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Use pkg-config script in this directory
+export PATH=.:$PATH
+
+# Use libraries copied from RPi
+SYSROOT="$(pwd)/sysroot"
+export LD_LIBRARY_PATH=${SYSROOT}/usr/lib/arm-linux-gnueabihf/
+export LIBRARY_PATH=${SYSROOT}/usr/lib/arm-linux-gnueabihf/
+
+cargo build --release --target="armv7-unknown-linux-gnueabihf" 2&>1 | tee cargo-output.txt
