@@ -1,9 +1,16 @@
 #!/bin/sh
 
-SYSROOT="$(pwd)/sysroot"
+# This isn't working right because cargo seems to copy this script somewhere else
+#SRC=$(readlink -f "${BASH_SOURCE[0]}")
+#DIR="$( cd "$( dirname "${SRC}" )" >/dev/null 2>&1 && pwd )"
+
+#SYSROOT="$DIR/sysroot"
+SYSROOT="/home/mch/Work/nordichack/nordichack/rust-ui-gtk/sysroot"
 
 export PKG_CONFIG_PATH=
-export PKG_CONFIG_LIBDIR=${SYSROOT}/usr/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig
+export PKG_CONFIG_LIBDIR=${SYSROOT}/lib/arm-linux-gnueabihf/pkgconfig:${SYSROOT}/usr/share/pkgconfig
 export PKG_CONFIG_SYSROOT_DIR=${SYSROOT}
 
-exec pkg-config "$@"
+env | grep PKG
+echo "Running /usr/bin/pkg-config $@"
+exec /usr/bin/pkg-config "$@"

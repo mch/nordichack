@@ -1,11 +1,19 @@
 #!/bin/bash
+SRC=$(readlink -f "${BASH_SOURCE[0]}")
+DIR="$( cd "$( dirname "${SRC}" )" >/dev/null 2>&1 && pwd )"
 
 # Use pkg-config script in this directory
-export PATH=.:$PATH
+export PKG_CONFIG="${DIR}/pkg-config"
 
 # Use libraries copied from RPi
-SYSROOT="$(pwd)/sysroot"
-export LD_LIBRARY_PATH=${SYSROOT}/usr/lib/arm-linux-gnueabihf/
-export LIBRARY_PATH=${SYSROOT}/usr/lib/arm-linux-gnueabihf/
+export LD_LIBRARY_PATH=${SYSROOT}/lib/arm-linux-gnueabihf/
+export LIBRARY_PATH=${SYSROOT}/lib/arm-linux-gnueabihf/
 
-cargo build --release --target="armv7-unknown-linux-gnueabihf" 2&>1 | tee cargo-output.txt
+# Use a cargo home outside the container to avoid downloading stuff that should be cached every
+# time.
+export CARGO_HOME=${DIR}/../.cargo_home
+
+# Enable use of mylinker2 script in this directory
+export PATH=.:$PATH
+
+cargo build --release --target="armv7-unknown-linux-gnueabihf"

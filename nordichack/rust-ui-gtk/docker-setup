@@ -1,24 +1,4 @@
 #!/bin/bash -ex
 
 # some libraries need to be copied to /lib/arm-linux-gnueabihf
-sudo cp target/release/deps/libc.* /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libc_nonshared.a /usr/lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/ld-linux-armhf.so.3 /lib
-sudo cp target/release/deps/libz.so.1.2.11 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libpcre.so.3 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libselinux.so.1 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libdbus-1.so.3 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libexpat.so.1 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libbrotlicommon.so.1 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libbsd.so.0 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libpcre2-8.so.0 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libsystemd.so.0 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libmd.so.0 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/liblzma.so.5 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libzstd.so.1 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/liblz4.so.1 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libgcrypt.so.20 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libgpg-error.so.0 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libpthread.so.0 /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libdl-2.31.so /lib/arm-linux-gnueabihf/
-sudo cp target/release/deps/libdl.so.2 /lib/arm-linux-gnueabihf/
+sudo cp sysroot/lib/arm-linux-gnueabihf/*.* /lib/arm-linux-gnueabihf/

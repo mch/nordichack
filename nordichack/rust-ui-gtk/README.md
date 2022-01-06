@@ -4,6 +4,10 @@ This is a test of cross compiling a GTK3 program for the Raspberry Pi.
 
 There is quite a bit of set up required for this to work. You need a Raspberry Pi running the target OS because you'll need to copy files from it locally. 
 
+0. Install the following packages on the Pi: 
+```
+sudo apt install -y pkg-config
+```
 1. Run the `setup` script to copy necessary files from the Pi. There are two things: pkg-config files, and libraries necessary for linking.
 2. Start the docker container (`../scripts/run`), building the container first if necessary (`../scripts/docker-build`).
 3. Run the `docker-setup` script within the container to copy files to the right place within the container.
@@ -14,3 +18,6 @@ There is quite a bit of set up required for this to work. You need a Raspberry P
 Useful resources:
 - [Cross-Compiling Rust Apps II: Linux Subtrees and Linker Shenanigans](https://capnfabs.net/posts/cross-compiling-rust-apps-linker-shenanigans-multistrap-chroot/)
 - [cross](https://github.com/rust-embedded/cross) “Zero setup” cross compilation and “cross testing” of Rust crates (I didn't use this but maybe should have)
+- [Cross compiling rust](https://github.com/japaric/rust-cross)
+- [Autotools pkg-config cross compiling](https://autotools.info/pkgconfig/cross-compiling.html)
+- [Guide to Cross Compilation for a Raspberry Pi](https://github.com/HesselM/rpicross_notes)

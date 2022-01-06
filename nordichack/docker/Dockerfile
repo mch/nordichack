@@ -4,7 +4,9 @@ ARG user
 ARG userid
 ARG groupid
 
-RUN apt-get update && apt-get install -y curl gcc-arm-linux-gnueabihf gcc sudo rsync ssh
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    curl gcc-arm-linux-gnueabihf gcc sudo rsync ssh pkg-config
 
 RUN addgroup --gid ${groupid} $user && useradd -m --uid ${userid} --gid ${groupid} $user
 RUN echo "${user} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd
