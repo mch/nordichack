@@ -1,29 +1,33 @@
 
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, Button};
+use gtk::{Application, ApplicationWindow, Button, Builder};
 
 fn main() {
     let application = Application::builder()
         .application_id("com.example.FirstGtkApp")
         .build();
 
-    application.connect_activate(|app| {
-        let window = ApplicationWindow::builder()
-            .application(app)
-            .title("First GTK Program")
-            .default_width(350)
-            .default_height(70)
-            .build();
-
-        let button = Button::with_label("Click me!");
-        button.connect_clicked(|_| {
-            eprintln!("Clicked!");
-        });
-        window.add(&button);
-
-        window.show_all();
-    });
+    application.connect_activate(build_ui);
 
     application.run();
 }
 
+fn build_ui(app: &Application) {
+    let builder = Builder::from_string(include_str!("ui.glade"));
+
+    let window: ApplicationWindow = builder
+        .object("window")
+        .expect("Couldn't get object 'window' from builder.");
+    let button: Button = builder
+        .object("start")
+        .expect("Couldn't get object 'start' from builder.");
+
+    window.set_application(Some(app));
+
+    button.connect_clicked(|_| {
+        eprintln!("Start Treadmill!");
+    });
+
+    window.show_all();
+
+}
