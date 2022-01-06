@@ -1,4 +1,6 @@
-#!/bin/bash -ex
+#!/bin/bash
 
-# some libraries need to be copied to /lib/arm-linux-gnueabihf
+# Some libraries need to be copied to specific paths to be linked
 sudo cp sysroot/lib/arm-linux-gnueabihf/*.* /lib/arm-linux-gnueabihf/
+sudo cp sysroot/usr/lib/arm-linux-gnueabihf/libc_nonshared.a /usr/lib/arm-linux-gnueabihf/
+

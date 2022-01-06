@@ -7,7 +7,6 @@ libselinux.*
 libdbus-1.*
 libexpat.*
 libbrotlicommon.*
-libbsd.*
 libpcre2-8.*
 libsystemd.*
 libmd.*
@@ -26,3 +25,5 @@ libblkid.*
 libm.*
 libm-2.*
 librt*
+ld-linux-armhf.*
+ld-2.*

@@ -64,3 +64,4 @@ libgcrypt.*
 libgpg-error.*
 libarmmem*
 libpthread.*
+libbsd.*

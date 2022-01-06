@@ -2,6 +2,17 @@
 
 This is a test of cross compiling a GTK3 program for the Raspberry Pi.
 
+## Native Compilation
+This is useful for development, to run on an x64 dev machine. This is simple, just:
+```
+cargo build
+```
+or
+```
+cargo run
+```
+
+## Cross Compilation
 There is quite a bit of set up required for this to work. You need a Raspberry Pi running the target OS because you'll need to copy files from it locally. 
 
 0. Install the following packages on the Pi: 
