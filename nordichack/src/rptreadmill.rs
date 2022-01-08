@@ -175,23 +175,22 @@ impl PiTreadmill {
                 let period_sec = period as f32 / 1000f32;
                 let frequency = 1.0 / period_sec;
                 let km_per_hr = 0.517 * frequency + 0.353;
-                //self.event_tx.send(Event::SpeedChanged(km_per_hr));
 
-                let current_speed = (km_per_hr * 100.0).round() / 100.0;
-                self.speeds[self.speeds_index] = current_speed;
+                self.speeds[self.speeds_index] = km_per_hr;
                 self.speeds_index = (self.speeds_index + 1) % self.speeds.len();
                 let avg_speed: f32 = self.speeds.iter().sum::<f32>() / (self.speeds.len() as f32);
-                self.event_tx.send(Event::SpeedChanged(avg_speed));
+                let current_speed = (avg_speed * 100.0).round() / 100.0;
                 if self.current_speed != current_speed {
                     self.current_speed = current_speed;
-                    //self.event_tx.send(Event::SpeedChanged(current_speed));
+                    self.event_tx.send(Event::SpeedChanged(current_speed));
                 }
             },
             &InputEvent::SafetyKeyInserted => {
                 self.event_tx.send(Event::KeyInserted);
             },
             &InputEvent::SafetyKeyRemoved => {
-                self.stop();
+                //self.stop(); // TODO Add RC filter circuit
+
                 self.event_tx.send(Event::KeyRemoved);
             }
         }

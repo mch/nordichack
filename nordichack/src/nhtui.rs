@@ -198,8 +198,6 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
                                 message = String::from("Safety Key removed!");
                                 events.push(message.clone());
                                 speed = 0.0;
-                                // TODO don't depend on the UI to do this
-                                tx.send(Command::SetSpeed(speed));
                                 message = String::from("Emergency Stop!");
                             },
                             Event::KeyInserted => {
