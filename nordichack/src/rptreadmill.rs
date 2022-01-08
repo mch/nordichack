@@ -14,6 +14,10 @@ const SAFETY_SWITCH_GPIO_PIN: u8 = 24;
 
 const PWM_PERIOD: Duration = Duration::from_millis(50);
 
+const SPEED_PIN_DEBOUNCE_MS: u128 = 15u128;
+const INCLINE_PIN_DEBOUNCE_MS: u128 = 100u128;
+const SAFETY_PIN_DEBOUNCE_MS: u128 = 50u128;
+
 struct OutputPins {
     pwm: Pwm,
     incline_up_pin: OutputPin,
@@ -73,12 +77,14 @@ pub struct PiTreadmill {
     event_tx: Sender<Event>,
     running: bool,
     current_speed: f32,
+    speeds: [f32; 10],
+    speeds_index: usize,
 }
 
 impl PiTreadmill {
     pub fn new(command_rx: Receiver<Command>, event_tx: Sender<Event>) -> Result<PiTreadmill, String> {
         let pins = PiTreadmill::set_up_output_pins(&event_tx);
-        pins.map(|pins| PiTreadmill { pins, command_rx, event_tx, running: true, current_speed: 0.0 })
+        pins.map(|pins| PiTreadmill { pins, command_rx, event_tx, running: true, current_speed: 0.0, speeds: [0.0; 10], speeds_index: 0 })
             .map_err(|err| err.to_string())
     }
 
@@ -99,13 +105,12 @@ impl PiTreadmill {
         while self.running {
             let op = select.select();
             if command_op == op.index() {
-                let command = self.command_rx.recv();
+                let command = op.recv(&command_rx);
                 if let Ok(command) = command {
                     self.handle_command(&command);
                 };
-            };
-            if input_op == op.index() {
-                let event = input_rx.recv();
+            } else if input_op == op.index() {
+                let event = op.recv(&input_rx);
                 if let Ok(event) = event {
                     self.handle_input_event(&event);
                 };
@@ -163,24 +168,31 @@ impl PiTreadmill {
         match event {
             &InputEvent::Incline(period) => {
                 // If incline is supposed to be changing and it is not, STOP and inform user.
+                self.event_tx.send(Event::Msg(format!("Incline changed, period: {}", period)));
             },
             &InputEvent::Speed(period) => {
                 // If speed is not > 0 and it is supposed to be, STOP and inform user.
                 let period_sec = period as f32 / 1000f32;
                 let frequency = 1.0 / period_sec;
                 let km_per_hr = 0.517 * frequency + 0.353;
+                //self.event_tx.send(Event::SpeedChanged(km_per_hr));
 
                 let current_speed = (km_per_hr * 100.0).round() / 100.0;
-                if current_speed != current_speed {
+                self.speeds[self.speeds_index] = current_speed;
+                self.speeds_index = (self.speeds_index + 1) % self.speeds.len();
+                let avg_speed: f32 = self.speeds.iter().sum::<f32>() / (self.speeds.len() as f32);
+                self.event_tx.send(Event::SpeedChanged(avg_speed));
+                if self.current_speed != current_speed {
                     self.current_speed = current_speed;
-                    self.event_tx.send(Event::SpeedChanged(km_per_hr));
+                    //self.event_tx.send(Event::SpeedChanged(current_speed));
                 }
             },
             &InputEvent::SafetyKeyInserted => {
-                // Update UI
+                self.event_tx.send(Event::KeyInserted);
             },
             &InputEvent::SafetyKeyRemoved => {
-                // Stop treadmill
+                self.stop();
+                self.event_tx.send(Event::KeyRemoved);
             }
         }
     }
@@ -268,7 +280,7 @@ impl InterruptInputPinHandler {
             let current_instant = Instant::now();
             let period_ms = speed_pin_transition_instant.elapsed().as_millis();
             // T at 11 mph is about 30ms, so wait at least 15ms since last trigger for debouncing.
-            if period_ms > 15u128 {
+            if period_ms > SPEED_PIN_DEBOUNCE_MS {
                 speed_pin_transition_instant = current_instant;
                 speed_event_tx.send(InputEvent::Speed(period_ms));
             }
@@ -282,7 +294,7 @@ impl InterruptInputPinHandler {
             let period_ms = incline_transition_instant.elapsed().as_millis();
             // This signal should transition about once a second. It is high for about 800ms, then
             // drops low for 200ms.
-            if period_ms > 100u128 {
+            if period_ms > INCLINE_PIN_DEBOUNCE_MS {
                 incline_transition_instant = current_instant;
                 incline_event_tx.send(InputEvent::Incline(period_ms));
             }
