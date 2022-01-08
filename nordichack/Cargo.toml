@@ -9,6 +9,7 @@ edition = "2021"
 rppal = "0.13.1"
 tui = "0.16"
 termion = "1.5"
+crossbeam-channel = "0.5"
 
 [features]
 default = ["fake_treadmill"]

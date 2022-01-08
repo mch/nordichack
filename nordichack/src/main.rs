@@ -1,5 +1,5 @@
 use std::thread;
-use std::sync::mpsc::channel;
+use crossbeam_channel::{unbounded, Sender, Receiver};
 
 mod nhtui;
 mod treadmill;
@@ -11,8 +11,8 @@ use crate::treadmill::FakeTreadmill;
 fn main() {
     println!("Hello, world!");
 
-    let (event_tx, event_rx) = channel::<treadmill::Event>();
-    let (command_tx, command_rx) = channel::<treadmill::Command>();
+    let (event_tx, event_rx): (Sender<treadmill::Event>, Receiver<treadmill::Event>) = unbounded::<treadmill::Event>();
+    let (command_tx, command_rx): (Sender<treadmill::Command>, Receiver<treadmill::Command>) = unbounded::<treadmill::Command>();
 
     let ui_thread = thread::spawn(move || {
         if let Err(err) = nhtui::tui(command_tx, event_rx) {

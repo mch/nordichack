@@ -1,6 +1,6 @@
 use std::io::{Write, stdout, stdin};
 use std::io;
-use std::sync::mpsc::{Sender, Receiver, channel};
+use crossbeam_channel::{unbounded, Sender, Receiver};
 use std::thread;
 use std::time::Duration;
 use termion::event::Key;
@@ -22,7 +22,8 @@ enum UiEvent {
 }
 
 pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
-    let (key_tx, key_rx) = channel::<Key>();
+    // TODO replace these threads with select
+    let (key_tx, key_rx) = unbounded::<Key>();
     let input_thread = thread::spawn(move || {
         let stdin = stdin();
         let mut keys = stdin.keys();
@@ -38,9 +39,7 @@ pub fn tui(tx: Sender<Command>, rx: Receiver<Event>) -> Result<(), io::Error> {
         }
     });
 
-    // Idk, might work for now.
-    // Using tokio for async might be better.
-    let (event_tx, event_rx) = channel::<UiEvent>();
+    let (event_tx, event_rx) = unbounded::<UiEvent>();
     let merge_thread = thread::spawn(move || {
         let duration = Duration::from_millis(10);
         loop {

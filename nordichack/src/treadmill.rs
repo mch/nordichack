@@ -1,4 +1,4 @@
-use std::sync::mpsc::{channel, Sender, Receiver};
+use crossbeam_channel::{Sender, Receiver};
 use std::thread::{sleep};
 use std::time::{Duration};
 
