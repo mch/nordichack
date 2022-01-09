@@ -82,8 +82,9 @@ pub struct PiTreadmill {
 }
 
 impl PiTreadmill {
+    #[allow(dead_code)]
     pub fn new(command_rx: Receiver<Command>, event_tx: Sender<Event>) -> Result<PiTreadmill, String> {
-        let pins = PiTreadmill::set_up_output_pins(&event_tx);
+        let pins = PiTreadmill::set_up_output_pins();
         pins.map(|pins| PiTreadmill { pins, command_rx, event_tx, running: true, current_speed: 0.0, speeds: [0.0; 10], speeds_index: 0 })
             .map_err(|err| err.to_string())
     }
@@ -91,10 +92,15 @@ impl PiTreadmill {
     /**
      * Blocks waiting for commands.
      */
+    #[allow(dead_code)]
     pub fn run(self: &mut Self) {
         let (input_tx, input_rx) = unbounded::<InputEvent>();
         let input_handler = PollingInputPinHandler::new(&input_tx);
-        input_handler.map(|handler| handler.watch_inputs());
+        //let input_handler = InterruptInputPinHandler::new(&input_tx);
+        input_handler.map(|handler| handler.watch_inputs())
+            .map_err(|err| {
+                self.event_tx.send(Event::Msg(format!("Failed to set up input: {}", err))).ok();
+            }).ok();
 
         let mut select = Select::new();
         // To avoid borrowing self as both mutable and immutable, clone the stored command_rx
@@ -118,7 +124,7 @@ impl PiTreadmill {
         }
     }
 
-    fn set_up_output_pins(event_tx: &Sender<Event>) -> Result<OutputPins, TreadmillError> {
+    fn set_up_output_pins() -> Result<OutputPins, TreadmillError> {
         // PWM to drive the treadmill
         let pwm = Pwm::new(Channel::Pwm0)?;
         pwm.disable();

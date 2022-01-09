@@ -8,6 +8,7 @@ mod nhtui;
 mod treadmill;
 mod rptreadmill;
 
+#[allow(unused_imports)]
 use crate::rptreadmill::PiTreadmill;
 use crate::treadmill::FakeTreadmill;
 

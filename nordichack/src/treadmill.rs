@@ -43,10 +43,7 @@ pub struct FakeTreadmill {
     incline: f32,
 }
 
-const DEFAULT_SPEED: f32 = 2.0;
-
 impl FakeTreadmill {
-
     pub fn new(command_rx: Receiver<Command>, event_tx: Sender<Event>) -> Result<FakeTreadmill, String> {
         Ok(FakeTreadmill { command_rx, event_tx, speed: 0.0, incline: 0.0 })
     }
@@ -57,8 +54,8 @@ impl FakeTreadmill {
     pub fn run(self: &mut Self) {
         for command in self.command_rx.iter() {
             match command {
-                Command::SetSpeed(desiredSpeed) => {
-                    self.speed = desiredSpeed;
+                Command::SetSpeed(desired_speed) => {
+                    self.speed = desired_speed;
                     sleep(Duration::from_millis(100));
                     self.event_tx.send(Event::SpeedChanged(self.speed));
                 },
